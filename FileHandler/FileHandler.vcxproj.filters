@@ -1,0 +1,46 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="DataStructures">
+      <UniqueIdentifier>{c5ca4e00-1d73-41bc-a7d8-c7e6a7207552}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Mode">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Source.cpp">
+      <Filter>Mode</Filter>
+    </ClCompile>
+    <ClCompile Include="mode_obj.cpp">
+      <Filter>Mode</Filter>
+    </ClCompile>
+    <ClCompile Include="render_model_import.cpp">
+      <Filter>Mode</Filter>
+    </ClCompile>
+    <ClCompile Include="data_structures.cpp">
+      <Filter>DataStructures</Filter>
+    </ClCompile>
+    <ClCompile Include="directory_functions.cpp">
+      <Filter>DataStructures</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="data_structures.h">
+      <Filter>DataStructures</Filter>
+    </ClInclude>
+    <ClInclude Include="directory_functions.h">
+      <Filter>DataStructures</Filter>
+    </ClInclude>
+    <ClInclude Include="TAG_BLOCK_structures.h">
+      <Filter>DataStructures</Filter>
+    </ClInclude>
+    <ClInclude Include="mode_obj.h">
+      <Filter>Mode</Filter>
+    </ClInclude>
+    <ClInclude Include="render_model_import.h">
+      <Filter>Mode</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>
