@@ -1,6 +1,7 @@
 # DaeConverter
 A command line based app to import and extract Halo 2 Render Model tags
 
+[![Build status](https://ci.appveyor.com/api/projects/status/bul7rrcbjeuk5qna/branch/master?svg=true)](https://ci.appveyor.com/project/Himanshu-01/daeconverter/branch/master)
 
 ## Launch Parameters ##
 
