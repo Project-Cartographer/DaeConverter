@@ -1073,7 +1073,7 @@ void section_data::Load_mesh_recursive(aiNode* node, const aiScene* my_scene, co
 				aiVector3D t_vertex_uv = t_mesh->mTextureCoords[0][j];
 
 				t_RAWvertex.tex_cord.x = t_vertex_uv.x;
-				t_RAWvertex.tex_cord.y = 1 - t_vertex_uv.y;//halo math
+				t_RAWvertex.tex_cord.y = t_vertex_uv.y;//halo math
 			}
 
 			vertex_list.push_back(t_RAWvertex);
