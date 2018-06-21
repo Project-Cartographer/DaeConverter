@@ -1021,11 +1021,11 @@ section_data::section_data(const aiScene* my_scene, int material_start_index,con
 }
 void section_data::Load_mesh_recursive(aiNode* node, const aiScene* my_scene, const vector<nodes> &nodes_list)
 {
-	int vertex_start_index = vertex_list.size();
-	int _per_mesh_nodemap_start_index = node_map_list.size();
-
 	for (int i = 0; i < node->mNumMeshes; i++)
 	{
+		int vertex_start_index = vertex_list.size();
+		int _per_mesh_nodemap_start_index = node_map_list.size();
+
 		int mesh_index = node->mMeshes[i];
 		aiMesh* t_mesh = my_scene->mMeshes[mesh_index];
 
@@ -1073,7 +1073,7 @@ void section_data::Load_mesh_recursive(aiNode* node, const aiScene* my_scene, co
 				aiVector3D t_vertex_uv = t_mesh->mTextureCoords[0][j];
 
 				t_RAWvertex.tex_cord.x = t_vertex_uv.x;
-				t_RAWvertex.tex_cord.y = t_vertex_uv.y;//halo math
+				t_RAWvertex.tex_cord.y = t_vertex_uv.y;
 			}
 
 			vertex_list.push_back(t_RAWvertex);
@@ -1173,128 +1173,15 @@ mode::mode(render_model_import::render_model_import& my_import)
 				if (k < t_size)
 				{					
 					const aiScene* import_model = aiImportFile(my_import.region_list[i].perms_list[j].model_files[k].c_str(), aiProcessPreset_TargetRealtime_MaxQuality);
-					//adding node data ----ONCE PER RENDER_MODEL------
+					//adding node data ----ONCE PER region------
 					const aiNode* root_node = import_model->mRootNode;
-					if (i == 0 && j == 0 && k == 0)
+					if (j == 0 && k == 0)
 					{
 						for (int l = 0; l < import_model->mNumMeshes; l++)
 						{
 							aiMesh* t_mesh = import_model->mMeshes[l];
 							for (int m = 0; m < t_mesh->mNumBones; m++)
-							{
-								aiBone* t_bone = t_mesh->mBones[m];
-								aiNode* t_ainode = import_model->mRootNode->FindNode(t_bone->mName);
-
-								nodes t_node = { "",0 };
-								t_node.name = t_bone->mName.C_Str();
-								t_node.parentNode = -1;
-								t_node.firstChildNode = -1;
-								t_node.nextSiblingNode = -1;
-								t_node.importNodeIndex = m;
-
-								aiMatrix4x4* t_mat = new aiMatrix4x4(t_ainode->mTransformation);
-
-								aiVector3D t_ainode_pos;
-								aiQuaternion t_ainode_rot;
-
-								t_mat->DecomposeNoScaling(t_ainode_rot, t_ainode_pos);
-
-								t_node.defaultTranslation.x = t_ainode_pos.x / 100;
-								t_node.defaultTranslation.y = t_ainode_pos.y / 100;
-								t_node.defaultTranslation.z = t_ainode_pos.z / 100;
-
-								t_node.defaultRotation.i = t_ainode_rot.x;
-								t_node.defaultRotation.j = t_ainode_rot.y;
-								t_node.defaultRotation.k = t_ainode_rot.z;
-								t_node.defaultRotation.w = t_ainode_rot.w;
-
-								t_node.distanceFromParent = t_ainode_pos.Length() / 100;
-
-								aiNode* t_parent = t_ainode->mParent;
-								//aiMultiplyMatrix4(t_mat, &t_bone->mOffsetMatrix);
-								while (t_parent != root_node)
-								{
-									aiMultiplyMatrix4(t_mat, &t_parent->mTransformation);
-									t_parent = t_parent->mParent;
-								}
-
-								t_mat->Inverse();//turning it into an inverse
-
-								//i dont know why h2 saves inverses in this manner(maybe just to mislead modders)
-								t_node.inverseForward.x = 1;
-								t_node.inverseForward.y = t_mat->a1;
-								t_node.inverseForward.z = t_mat->b1;
-
-								t_node.inverseLeft.x = t_mat->c1;
-								t_node.inverseLeft.y = t_mat->a2;
-								t_node.inverseLeft.z = t_mat->b2;
-
-								t_node.inverseUp.x = t_mat->c2;
-								t_node.inverseUp.y = t_mat->a3;
-								t_node.inverseUp.z = t_mat->b3;
-
-								t_node.inversePosition.x = t_mat->c3;
-								t_node.inversePosition.y = t_mat->a4 / 100;
-								t_node.inversePosition.z = t_mat->b4 / 100;
-								t_node.inverseScale = t_mat->c4 / 100;
-
-								nodes_list.push_back(t_node);
-							}
-						}
-						//linking parent and children
-						for (int l = 0; l < nodes_list.size(); l++)
-						{
-							aiNode* t_ainode = import_model->mRootNode->FindNode(nodes_list[l].name.c_str());
-
-							//adding parent
-							if (t_ainode->mParent&&t_ainode->mParent != import_model->mRootNode)
-							{
-								//parent should be added before children
-								for (int m = 0; m < l; m++)
-								{
-									if (strcmp(t_ainode->mParent->mName.C_Str(), nodes_list[m].name.c_str()) == 0)
-									{
-										nodes_list[l].parentNode = (short)m;
-										break;
-									}
-								}
-							}
-							//adding child
-							if (t_ainode->mNumChildren)
-							{
-								int first_child_index = -1;
-								for (int m = l + 1; m < nodes_list.size(); m++)
-								{
-									//for any no of children
-									if (t_ainode->mNumChildren > 1)
-									{
-										for (int a = 0; a < t_ainode->mNumChildren; a++)
-										{
-											if (!strcmp(t_ainode->mChildren[a]->mName.C_Str(), nodes_list[m].name.c_str()))
-											{
-												if (first_child_index == -1)
-												{
-													first_child_index = m;
-													nodes_list[l].firstChildNode = first_child_index;
-												}
-												else
-												{
-													nodes_list[first_child_index].nextSiblingNode = m;
-													first_child_index = m;
-												}
-											}
-										}
-									}
-									else
-									{
-										if (!strcmp(t_ainode->mChildren[0]->mName.C_Str(), nodes_list[m].name.c_str()))
-										{
-											nodes_list[l].firstChildNode = m;
-											break;
-										}
-									}
-								}
-							}
+								recursive_node_loading(t_mesh->mBones[m]->mName.C_Str(), import_model, -1);
 						}
 					}
 
@@ -1324,6 +1211,98 @@ mode::mode(render_model_import::render_model_import& my_import)
 		region_list.push_back(t_regions);
 	}
 }
+//returns the index of node by the given name
+int mode::recursive_node_loading(std::string name, const aiScene* my_scene, int parent_index)
+{
+	int ret = find_node_in_node_list(name);
+	if (ret != -1)
+	{
+		//if parent is not assigned we assign it
+		if (parent_index != -1 && nodes_list[ret].parentNode == -1)
+			nodes_list[ret].parentNode = parent_index;
+		return ret;
+	}
+	//its not present in the list,we are gonna need to add it
+	aiNode* current_node = my_scene->mRootNode->FindNode(name.c_str());
 
+	nodes t_node = { "",0 };
+	t_node.name = current_node->mName.C_Str();
+	t_node.parentNode = parent_index;
+	t_node.firstChildNode = -1;
+	t_node.nextSiblingNode = -1;
+	t_node.importNodeIndex = -1;
+
+	aiMatrix4x4* t_mat = new aiMatrix4x4(current_node->mTransformation);
+
+	aiVector3D t_ainode_pos;
+	aiQuaternion t_ainode_rot;
+
+	t_mat->DecomposeNoScaling(t_ainode_rot, t_ainode_pos);
+
+	t_node.defaultTranslation.x = t_ainode_pos.x / 100;
+	t_node.defaultTranslation.y = t_ainode_pos.y / 100;
+	t_node.defaultTranslation.z = t_ainode_pos.z / 100;
+
+	t_node.defaultRotation.i = t_ainode_rot.x;
+	t_node.defaultRotation.j = t_ainode_rot.y;
+	t_node.defaultRotation.k = t_ainode_rot.z;
+	t_node.defaultRotation.w = t_ainode_rot.w;
+
+	t_node.distanceFromParent = t_ainode_pos.Length() / 100;
+
+	aiNode* t_parent = current_node->mParent;
+	while (t_parent != my_scene->mRootNode)
+	{
+		aiMultiplyMatrix4(t_mat, &t_parent->mTransformation);
+		t_parent = t_parent->mParent;
+	}
+
+	t_mat->Inverse();//turning it into an inverse
+
+	//i dont know why h2 saves inverses in this manner(maybe just to mislead modders)<4x4 or 4x3 whatever><IDC>
+	t_node.inverseForward.x = 1;
+	t_node.inverseForward.y = t_mat->a1;
+	t_node.inverseForward.z = t_mat->b1;
+
+	t_node.inverseLeft.x = t_mat->c1;
+	t_node.inverseLeft.y = t_mat->a2;
+	t_node.inverseLeft.z = t_mat->b2;
+
+	t_node.inverseUp.x = t_mat->c2;
+	t_node.inverseUp.y = t_mat->a3;
+	t_node.inverseUp.z = t_mat->b3;
+
+	t_node.inversePosition.x = t_mat->c3;
+	t_node.inversePosition.y = t_mat->a4 / 100;
+	t_node.inversePosition.z = t_mat->b4 / 100;
+	t_node.inverseScale = t_mat->c4 / 100;
+
+	nodes_list.push_back(t_node);
+
+	int t_parent_index = nodes_list.size() - 1;
+	//of course the next node will be its child
+	int prev_child;
+	if (current_node->mNumChildren)
+	{
+		nodes_list[t_parent_index].firstChildNode = nodes_list.size();
+		prev_child = recursive_node_loading(current_node->mChildren[0]->mName.C_Str(), my_scene, t_parent_index);
+	}
+	for (int i = 1; i < current_node->mNumChildren; i++)
+	{
+		int t = recursive_node_loading(current_node->mChildren[i]->mName.C_Str(), my_scene, t_parent_index);
+		nodes_list[prev_child].nextSiblingNode = t;
+		prev_child = t;
+	}
+	return t_parent_index;
+}
+int mode::find_node_in_node_list(std::string name)
+{
+	for (int i = 0; i < nodes_list.size(); i++)
+	{
+		if (nodes_list[i].name.compare(name) == 0)
+			return i;
+	}
+	return -1;
+}
 
 #pragma endregion definition of functions that load from other file formats

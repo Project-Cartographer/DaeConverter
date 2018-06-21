@@ -224,6 +224,8 @@ private:
 
 	vector3d Calculate_centroid(parts& my_parts,section_data& my_section);
 	list<int> Generate_strip_indices(parts& my_parts);
+	int recursive_node_loading(std::string name, const aiScene* my_scene, int parent_index);//returns the index of node to be loaded or found
+	int find_node_in_node_list(std::string name);
 
 	void Dump_obj_data(section_data&, string file);	
 	void Dump_collada_data(string file);
