@@ -30,7 +30,7 @@ A command line based app to import and extract Halo 2 Render Model tags
 
 * __Incomplete__
 	* collada dumping function
-	* collada loading function  
+	* collada loading function(its in alpha stage,therefore not error free)  
   
 ## Contributing ##
 Contributions are welcome, MSVC 2015 is currently used to build the app, and is therefore the recommended IDE.
@@ -42,4 +42,5 @@ Contributions are welcome, MSVC 2015 is currently used to build the app, and is 
 * Uses [Assimp Library](http://www.assimp.org/)
 
 ## Bug Reports ##
-The Program is still incomplete and often breaks when trying to extract render data of big tags
+The Program is still incomplete and often breaks when trying to extract render data of some tags.
+It is mainly due to different TAG_BLOCK header of certain tags.
