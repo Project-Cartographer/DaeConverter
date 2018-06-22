@@ -1044,9 +1044,9 @@ void section_data::Load_mesh_recursive(aiNode* node, const aiScene* my_scene, co
 				t_parent = t_parent->mParent;
 			}
 
-			t_RAWvertex.pos.x = t_vertex_pos.x;
-			t_RAWvertex.pos.y = t_vertex_pos.y;
-			t_RAWvertex.pos.z = t_vertex_pos.z;
+			t_RAWvertex.pos.x = t_vertex_pos.x / 100;
+			t_RAWvertex.pos.y = t_vertex_pos.y / 100;
+			t_RAWvertex.pos.z = t_vertex_pos.z / 100;
 
 			if (t_mesh->HasTangentsAndBitangents())
 			{
