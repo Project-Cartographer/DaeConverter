@@ -1313,3 +1313,10 @@ int mode::find_node_in_node_list(std::string name)
 }
 
 #pragma endregion definition of functions that load from other file formats
+
+#pragma region friend_functions
+void replace_node_data(mode* dest, mode* src)
+{
+	dest->nodes_list.assign(src->nodes_list.cbegin(), src->nodes_list.cend());
+}
+#pragma endregion

@@ -13,7 +13,7 @@ using std::cout;
 
 void main(int argc,char* args[])
 {
-	if (argc == 3)
+	if (argc >=3)
 	{
 		char temp[256];
 		std::string directory;
@@ -69,6 +69,51 @@ void main(int argc,char* args[])
 			CreateDirectoryA(output_dir.c_str(), 0);
 
 			my_mode_obj->Test_Dump(output_dir);
+		}
+		else if ((!strcmp(args[1], "-replace-node")))
+		{
+			std::string dest_loc = directory + args[2];
+			std::string source_loc = directory + args[3];
+
+			cout << "\n Copying node_data from " << source_loc.c_str() << " to " << dest_loc.c_str();
+
+			ifstream fin;
+			fin.open(dest_loc.c_str(), ios::binary | ios::in | ios::ate);
+			if(!fin.is_open())
+			{
+				cout << "Couldnt find file " << dest_loc.c_str() << "\n";
+				return;
+			}
+			tag_data_struct dest_struct;
+
+			dest_struct.size = fin.tellg();
+			fin.seekg(0x0, ios::beg);
+			dest_struct.tag_data = new char[dest_struct.size];
+			fin.read(dest_struct.tag_data, dest_struct.size);
+			
+			fin.close();
+
+			fin.open(source_loc.c_str(), ios::binary | ios::in | ios::ate);
+			if (!fin.is_open())
+			{
+				cout << "Couldnt find file " << source_loc.c_str() << "\n";
+				return;
+			}
+			tag_data_struct source_struct;
+
+			source_struct.size = fin.tellg();
+			fin.seekg(0x0, ios::beg);
+			source_struct.tag_data = new char[source_struct.size];
+			fin.read(source_struct.tag_data, source_struct.size);
+
+			fin.close();
+
+			mode* dest_mode_obj = new mode(dest_struct);
+			mode* source_mode_obj = new mode(source_struct);
+			
+			replace_node_data(dest_mode_obj, source_mode_obj);
+
+			dest_mode_obj->Dump_render_model(dest_loc);
 		}
 	}
 }

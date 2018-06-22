@@ -232,4 +232,7 @@ private:
 	void Dump_obj_data(section_data&, string file);	
 	void Dump_collada_data(string file);
 	void nodes_data_dump(int, aiNode*);
+
+	//friend functions
+	friend void replace_node_data(mode* dest, mode* src);
 };
