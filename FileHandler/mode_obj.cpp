@@ -1157,6 +1157,20 @@ mode::mode(render_model_import::render_model_import& my_import)
 	name = my_import.model_name;
 	int section_index = 0;
 	int material_start_index = 0;
+
+	//adding node data
+	if (my_import.armature_file.length())
+	{
+		const aiScene* armature = aiImportFile(my_import.armature_file.c_str(), aiProcessPreset_TargetRealtime_MaxQuality);
+		for (int i = 0; i < armature->mNumMeshes; i++)
+		{
+			for (int j = 0; j < armature->mMeshes[i]->mNumBones; j++)
+				Load_bone(armature->mMeshes[i]->mBones[j]->mName.C_Str(), armature);
+		}
+		Link_bones(armature);
+	}
+	//will be adding marker data shortly
+
 	for (int i = 0; i < my_import.region_list.size(); i++)
 	{
 		regions t_regions;
@@ -1173,18 +1187,6 @@ mode::mode(render_model_import::render_model_import& my_import)
 				if (k < t_size)
 				{					
 					const aiScene* import_model = aiImportFile(my_import.region_list[i].perms_list[j].model_files[k].c_str(), aiProcessPreset_TargetRealtime_MaxQuality);
-					//adding node data ----ONCE PER region------
-					const aiNode* root_node = import_model->mRootNode;
-					if (j == 0 && k == 0)
-					{
-						for (int l = 0; l < import_model->mNumMeshes; l++)
-						{
-							aiMesh* t_mesh = import_model->mMeshes[l];
-							for (int m = 0; m < t_mesh->mNumBones; m++)
-								recursive_node_loading(t_mesh->mBones[m]->mName.C_Str(), import_model, -1);
-						}
-					}
-
 					section_data t_section(import_model, material_start_index, nodes_list);
 					section_data_list.push_back(t_section);
 
@@ -1212,22 +1214,13 @@ mode::mode(render_model_import::render_model_import& my_import)
 	}
 }
 //returns the index of node by the given name
-int mode::recursive_node_loading(std::string name, const aiScene* my_scene, int parent_index)
+void mode::Load_bone(std::string name, const aiScene* my_scene)
 {
-	int ret = find_node_in_node_list(name);
-	if (ret != -1)
-	{
-		//if parent is not assigned we assign it
-		if (parent_index != -1 && nodes_list[ret].parentNode == -1)
-			nodes_list[ret].parentNode = parent_index;
-		return ret;
-	}
-	//its not present in the list,we are gonna need to add it
 	aiNode* current_node = my_scene->mRootNode->FindNode(name.c_str());
 
 	nodes t_node = { "",0 };
 	t_node.name = current_node->mName.C_Str();
-	t_node.parentNode = parent_index;
+	t_node.parentNode = -1;
 	t_node.firstChildNode = -1;
 	t_node.nextSiblingNode = -1;
 	t_node.importNodeIndex = -1;
@@ -1278,22 +1271,36 @@ int mode::recursive_node_loading(std::string name, const aiScene* my_scene, int 
 	t_node.inverseScale = t_mat->c4 / 100;
 
 	nodes_list.push_back(t_node);
+}
+//reverted to the original logic
+void mode::Link_bones(const aiScene* my_scene)
+{
+	for (int i = 0; i < nodes_list.size(); i++)
+	{
+		aiNode* t_ainode = my_scene->mRootNode->FindNode(nodes_list[i].name.c_str());
 
-	int t_parent_index = nodes_list.size() - 1;
-	//of course the next node will be its child
-	int prev_child;
-	if (current_node->mNumChildren)
-	{
-		nodes_list[t_parent_index].firstChildNode = nodes_list.size();
-		prev_child = recursive_node_loading(current_node->mChildren[0]->mName.C_Str(), my_scene, t_parent_index);
+		//fixing parent index
+		if (t_ainode->mParent != my_scene->mRootNode)
+			nodes_list[i].parentNode = (short)find_node_in_node_list(t_ainode->mParent->mName.C_Str());
+		
+		//fixing child and next sibbiling indexes
+		int prev_child_index;
+		for (int j = 0; j < t_ainode->mNumChildren; j++)
+		{
+			int t = find_node_in_node_list(t_ainode->mChildren[j]->mName.C_Str());
+			if (j)
+			{
+				//sibbilings
+				nodes_list[prev_child_index].nextSiblingNode = (short)t;
+			}
+			else
+			{
+				//first child
+				nodes_list[i].firstChildNode = (short)t;
+			}
+			prev_child_index = t;
+		}
 	}
-	for (int i = 1; i < current_node->mNumChildren; i++)
-	{
-		int t = recursive_node_loading(current_node->mChildren[i]->mName.C_Str(), my_scene, t_parent_index);
-		nodes_list[prev_child].nextSiblingNode = t;
-		prev_child = t;
-	}
-	return t_parent_index;
 }
 int mode::find_node_in_node_list(std::string name)
 {

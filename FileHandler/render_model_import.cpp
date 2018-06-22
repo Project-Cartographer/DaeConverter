@@ -1,9 +1,23 @@
 #include "render_model_import.h"
+#include<fstream>
 
 namespace render_model_import
 {
 	render_model_import::render_model_import(std::string model_dir)
 	{
+		//some stuff on armature and markers
+		std::ifstream fin(model_dir + "\\armature.dae");
+		if (fin.is_open())
+			armature_file = model_dir + "\\armature.dae";
+		else
+			armature_file = "";
+		fin.close();
+		fin.open(model_dir + "\\markers.dae");
+		if (fin.is_open())
+			markers_file = model_dir + "\\markers.dae";
+		else markers_file = "";
+		fin.close();
+
 		model_name = get_current_folder(model_dir);
 		std::vector<std::string> region_names;
 		read_directory(model_dir, region_names);
