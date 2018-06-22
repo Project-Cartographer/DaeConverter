@@ -1223,7 +1223,7 @@ void mode::Load_bone(std::string name, const aiScene* my_scene)
 	t_node.parentNode = -1;
 	t_node.firstChildNode = -1;
 	t_node.nextSiblingNode = -1;
-	t_node.importNodeIndex = -1;
+	t_node.importNodeIndex = nodes_list.size();
 
 	aiMatrix4x4* t_mat = new aiMatrix4x4(current_node->mTransformation);
 
