@@ -1171,6 +1171,7 @@ mode::mode(render_model_import::render_model_import& my_import)
 				Load_bone(armature->mMeshes[i]->mBones[j]->mName.C_Str(), armature);
 		}
 		Link_bones(armature);
+		aiReleaseImport(armature);
 	}
 	//will be adding marker data shortly
 
@@ -1190,6 +1191,12 @@ mode::mode(render_model_import::render_model_import& my_import)
 				if (k < t_size)
 				{					
 					const aiScene* import_model = aiImportFile(my_import.region_list[i].perms_list[j].model_files[k].c_str(), aiProcessPreset_TargetRealtime_MaxQuality);
+					if (import_model == NULL) 
+					{
+						cout << "\n---------IMPORT ERROR------------ \n" << my_import.region_list[i].perms_list[j].model_files[k].c_str() << '\n' << aiGetErrorString();
+						getch();//halt
+						exit(0x0);
+					}
 					section_data t_section(import_model, material_start_index, nodes_list);
 					section_data_list.push_back(t_section);
 
@@ -1205,6 +1212,7 @@ mode::mode(render_model_import::render_model_import& my_import)
 						material_start_index += import_model->mNumMaterials;
 					}
 					((__int8*)&t_perm.L1)[k] = section_index++;
+					aiReleaseImport(import_model);
 				}
 				else
 				{
