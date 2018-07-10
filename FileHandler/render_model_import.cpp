@@ -43,7 +43,8 @@ namespace render_model_import
 
 				t_region.perms_list.push_back(t_perms);
 			}
-			region_list.push_back(t_region);
+			if (perms_names.size())
+				region_list.push_back(t_region);
 		}
 	}
 }

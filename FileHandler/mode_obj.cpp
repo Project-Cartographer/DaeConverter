@@ -1124,7 +1124,10 @@ void section_data::Load_mesh_recursive(aiNode* node, const aiScene* my_scene, co
 			t_face.v1 = vertex_start_index + t_indices[1];
 			t_face.v2 = vertex_start_index + t_indices[2];
 
-			t_part.face_list.push_back(t_face);
+			if (t_face.v0 < vertex_list.size() && t_face.v1 < vertex_list.size() && t_face.v2 < vertex_list.size())
+				t_part.face_list.push_back(t_face);
+			else
+				cout << "\nStray vertex found";
 		}
 		parts_list.push_back(t_part);
 
