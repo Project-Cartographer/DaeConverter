@@ -1024,7 +1024,6 @@ void section_data::Load_mesh_recursive(aiNode* node, const aiScene* my_scene, co
 	for (int i = 0; i < node->mNumMeshes; i++)
 	{
 		int vertex_start_index = vertex_list.size();
-		int _per_mesh_nodemap_start_index = node_map_list.size();
 
 		int mesh_index = node->mMeshes[i];
 		aiMesh* t_mesh = my_scene->mMeshes[mesh_index];
@@ -1091,23 +1090,23 @@ void section_data::Load_mesh_recursive(aiNode* node, const aiScene* my_scene, co
 			{
 				if (t_weight[k].mWeight > vertex_list[vertex_start_index + t_weight[k].mVertexId].nodes[0].weight)
 				{
-					vertex_list[t_weight[k].mVertexId].nodes[0].index = t_node_map_index;
-					vertex_list[t_weight[k].mVertexId].nodes[0].weight = t_weight[k].mWeight;
+					vertex_list[vertex_start_index + t_weight[k].mVertexId].nodes[0].index = t_node_map_index;
+					vertex_list[vertex_start_index + t_weight[k].mVertexId].nodes[0].weight = t_weight[k].mWeight;
 				}
 				else if (t_weight[k].mWeight>vertex_list[vertex_start_index + t_weight[k].mVertexId].nodes[1].weight)
 				{
-					vertex_list[t_weight[k].mVertexId].nodes[1].index = t_node_map_index;
-					vertex_list[t_weight[k].mVertexId].nodes[1].weight = t_weight[k].mWeight;
+					vertex_list[vertex_start_index + t_weight[k].mVertexId].nodes[1].index = t_node_map_index;
+					vertex_list[vertex_start_index + t_weight[k].mVertexId].nodes[1].weight = t_weight[k].mWeight;
 				}
 				else if (t_weight[k].mWeight > vertex_list[vertex_start_index + t_weight[k].mVertexId].nodes[2].weight)
 				{
-					vertex_list[t_weight[k].mVertexId].nodes[2].index = t_node_map_index;
-					vertex_list[t_weight[k].mVertexId].nodes[2].weight = t_weight[k].mWeight;
+					vertex_list[vertex_start_index + t_weight[k].mVertexId].nodes[2].index = t_node_map_index;
+					vertex_list[vertex_start_index + t_weight[k].mVertexId].nodes[2].weight = t_weight[k].mWeight;
 				}
 				else if (t_weight[k].mWeight > vertex_list[vertex_start_index + t_weight[k].mVertexId].nodes[3].weight)
 				{
-					vertex_list[t_weight[k].mVertexId].nodes[3].index = t_node_map_index;
-					vertex_list[t_weight[k].mVertexId].nodes[3].weight = t_weight[k].mWeight;
+					vertex_list[vertex_start_index + t_weight[k].mVertexId].nodes[3].index = t_node_map_index;
+					vertex_list[vertex_start_index + t_weight[k].mVertexId].nodes[3].weight = t_weight[k].mWeight;
 				}
 			}
 		}
