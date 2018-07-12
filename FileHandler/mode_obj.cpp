@@ -1085,26 +1085,28 @@ void section_data::Load_mesh_recursive(aiNode* node, const aiScene* my_scene, co
 			aiBone* t_bone = t_mesh->mBones[j];
 			aiVertexWeight* t_weight = t_bone->mWeights;
 
+			int t_node_map_index = _get_node_map_index(t_bone->mName.C_Str(), nodes_list);
+
 			for (int k = 0; k <  t_bone->mNumWeights; k++)
 			{
 				if (t_weight[k].mWeight > vertex_list[vertex_start_index + t_weight[k].mVertexId].nodes[0].weight)
 				{
-					vertex_list[t_weight[k].mVertexId].nodes[0].index = _per_mesh_nodemap_start_index + j;
+					vertex_list[t_weight[k].mVertexId].nodes[0].index = t_node_map_index;
 					vertex_list[t_weight[k].mVertexId].nodes[0].weight = t_weight[k].mWeight;
 				}
 				else if (t_weight[k].mWeight>vertex_list[vertex_start_index + t_weight[k].mVertexId].nodes[1].weight)
 				{
-					vertex_list[t_weight[k].mVertexId].nodes[1].index = _per_mesh_nodemap_start_index + j;
+					vertex_list[t_weight[k].mVertexId].nodes[1].index = t_node_map_index;
 					vertex_list[t_weight[k].mVertexId].nodes[1].weight = t_weight[k].mWeight;
 				}
 				else if (t_weight[k].mWeight > vertex_list[vertex_start_index + t_weight[k].mVertexId].nodes[2].weight)
 				{
-					vertex_list[t_weight[k].mVertexId].nodes[2].index = _per_mesh_nodemap_start_index + j;
+					vertex_list[t_weight[k].mVertexId].nodes[2].index = t_node_map_index;
 					vertex_list[t_weight[k].mVertexId].nodes[2].weight = t_weight[k].mWeight;
 				}
 				else if (t_weight[k].mWeight > vertex_list[vertex_start_index + t_weight[k].mVertexId].nodes[3].weight)
 				{
-					vertex_list[t_weight[k].mVertexId].nodes[3].index = _per_mesh_nodemap_start_index + j;
+					vertex_list[t_weight[k].mVertexId].nodes[3].index = t_node_map_index;
 					vertex_list[t_weight[k].mVertexId].nodes[3].weight = t_weight[k].mWeight;
 				}
 			}
@@ -1131,30 +1133,35 @@ void section_data::Load_mesh_recursive(aiNode* node, const aiScene* my_scene, co
 		}
 		parts_list.push_back(t_part);
 
-		//adding a node map
-		//node map(bones or armature) should be same across LODs and permuatations
-		//just a add a crazy node map for a while
-		for (int j = 0; j < t_mesh->mNumBones; j++)
-		{
-			node_map t_Nmap;
-			for (int k = 0; k < nodes_list.size(); k++)
-			{
-				if (strcmp(nodes_list[k].name.c_str(), t_mesh->mBones[j]->mName.C_Str()) == 0)
-				{
-					t_Nmap.node_index = k;
-					break;
-				}
-			}
-			node_map_list.push_back(t_Nmap);
-		}
-
 	}
 
 	for (int i = 0; i < node->mNumChildren; i++)
 		Load_mesh_recursive(node->mChildren[i], my_scene,nodes_list);
 
 }
+int section_data::_get_node_map_index(std::string bone_name, const vector<nodes> &nodes_list)
+{
 
+	for (int i = 0; i < node_map_list.size(); i++)
+	{
+		int node_index = node_map_list[i].node_index;
+
+		if (bone_name.compare(nodes_list[node_index].name) == 0)
+			return i;
+	}
+	node_map t_Nmap;
+	for (int i = 0; i < nodes_list.size(); i++)
+	{
+		if (bone_name.compare(nodes_list[i].name) == 0)
+		{
+			t_Nmap.node_index = i;
+			break;
+		}
+	}
+	node_map_list.push_back(t_Nmap);
+
+	return node_map_list.size() - 1;
+}
 mode::mode(render_model_import::render_model_import& my_import)
 {
 	name = my_import.model_name;

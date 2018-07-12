@@ -174,6 +174,7 @@ public :
 
 private:
 	void Load_mesh_recursive(aiNode* node, const aiScene* my_scene, const vector<nodes> &nodes_list);//utilised during dae loading
+	int _get_node_map_index(std::string bone_name, const vector<nodes> &nodes_list);
 	int access_index;
 
 	int material_start_index;//utilised during dae loading
