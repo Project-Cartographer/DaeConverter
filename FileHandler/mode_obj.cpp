@@ -1336,4 +1336,8 @@ void replace_node_data(mode* dest, mode* src)
 {
 	dest->nodes_list.assign(src->nodes_list.cbegin(), src->nodes_list.cend());
 }
+void replace_marker_stuff(mode* dest, mode* src)
+{
+	dest->markers_groups_list.assign(src->markers_groups_list.cbegin(), src->markers_groups_list.cend());
+}
 #pragma endregion

@@ -236,4 +236,5 @@ private:
 
 	//friend functions
 	friend void replace_node_data(mode* dest, mode* src);
+	friend void replace_marker_stuff(mode* dest, mode* src);
 };
