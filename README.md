@@ -16,7 +16,7 @@ A command line based app to import and extract Halo 2 Render Model tags
   * Note : The Path is relative to CurrentDirectory
   
   #### Copying Node data ####
-  * Use "-replace-node <destination render_model file> <source render_model file>"
+  * Use "-replace-node \<destination render_model file\> \<source render_model file\>"
   * Example : DaeConverter.exe -replace-node test\test.render_model test\battle_rifle.render_model
   * Note : The Path is relative to CurrentDirectory	
   
