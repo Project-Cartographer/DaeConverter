@@ -22,7 +22,7 @@ A command line based app to import and extract Halo 2 Render Model tags
   
   #### Copying Marker_group data ####
   * similar to node data copying  
-  * "-replace-marker <destination render_model file> <source render_model file>"
+  * "-replace-marker \<destination render_model file\> \<source render_model file\>"
   
 ## Model_Directory
 * __ParentFolder__/__Regions__/__Permutations__/_Collada Files_(.dae)
