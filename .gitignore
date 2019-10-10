@@ -30,3 +30,10 @@
 *.exe
 *.out
 *.app
+/.vs/DaeConverter/v14/.suo
+/FileHandler/test/loli.render_model
+/FileHandler/test/test.render_model
+/FileHandler/x64/Debug
+/x64/Debug
+/DaeConverter.VC.db
+/DaeConverter.VC.VC.opendb

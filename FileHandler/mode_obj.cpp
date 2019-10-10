@@ -427,6 +427,8 @@ mode::mode(tag_data_struct& arg0)
 					temp_markers.scale = *(float*)(marker_mem + 0x20);
 
 					temp_markers_group.markers_list.push_back(temp_markers);
+
+					marker_mem += 0x24;
 				}
 
 				markers_groups_list.push_back(temp_markers_group);
