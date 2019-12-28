@@ -25,6 +25,9 @@
     <ClCompile Include="directory_functions.cpp">
       <Filter>DataStructures</Filter>
     </ClCompile>
+    <ClCompile Include="jms.cpp">
+      <Filter>Mode</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="data_structures.h">
@@ -40,6 +43,9 @@
       <Filter>Mode</Filter>
     </ClInclude>
     <ClInclude Include="render_model_import.h">
+      <Filter>Mode</Filter>
+    </ClInclude>
+    <ClInclude Include="jms.h">
       <Filter>Mode</Filter>
     </ClInclude>
   </ItemGroup>

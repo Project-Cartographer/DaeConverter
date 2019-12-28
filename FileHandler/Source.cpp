@@ -4,6 +4,7 @@
 
 #include"mode_obj.h"
 #include"render_model_import.h"
+#include"jms.h"
 
 using std::ifstream;
 using std::ofstream;
@@ -13,6 +14,9 @@ using std::cout;
 
 void main(int argc,char* args[])
 {
+	//bullshit test
+	jms::jms jms_obj("C:\\n.txt");
+
 	if (argc >=3)
 	{
 		char temp[256];

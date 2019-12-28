@@ -726,6 +726,7 @@ void mode::Dump_render_model(string file_loc)
 		for (int i = 0; i < section_data_list.size(); i++)
 		{
 			char section[0x68] = { 0 };
+			*(__int16*)section = 2;//geo classification rigid boned
 			*(int*)&section[0x34] = 1;
 			fout.write((char*)section, 0x68);
 		}
