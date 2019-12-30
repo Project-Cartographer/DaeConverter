@@ -4,10 +4,16 @@
 #include<string>
 #include<vector>
 
-//Jms Parser coded by Himanshu01
+//JMS Parser coded by Himanshu01
 //Currently based as per the format supplied by General101-H2PC[8200,8210]
+//8210 ->https://pastebin.com/NmZEekp0
 namespace jms
 {	
+	//parsing functions
+	void _parse_next(std::ifstream*, std::string&);
+	void _parse_next(std::ifstream*, int&);
+	void _parse_next(std::ifstream*, float&);
+
 	//lame coding
 	struct vector3D
 	{
@@ -50,7 +56,10 @@ namespace jms
 	struct material
 	{
 	public: std::string name;
-			std::string tif_path;
+			std::string tif_path;//CE lame
+			std::string LOD;
+			std::string Permutation;
+			std::string Region;
 
 			//read from ifstream(text interface)
 			void read(std::ifstream* jms_stream,int version);
@@ -128,7 +137,7 @@ namespace jms
 		std::vector<triangle> triangle_list;		
 
 		/// default constructor 
-		/// sets version to 8200
+		/// sets version to 8210
 		jms();
 		/// default constructor to initialise stuff
 		/// arg0 the version number

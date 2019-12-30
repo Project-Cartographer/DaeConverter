@@ -1,13 +1,59 @@
 #include "jms.h"
+#include<queue>
 
 namespace jms
 {
+	#define _buffer_length 128
+
+	std::queue<std::string> arg_list;
+	const char *whitespace = " \t\r\n\f";
+	char buffer[_buffer_length] = "";
+
+	void _parse_next(std::ifstream* in, std::string& out)
+	{	
+		//if have tokens
+		if (arg_list.size())
+		{
+			out = arg_list.front();
+			arg_list.pop();
+			return;
+		}
+		if (in->eof())
+		{
+			std::cout << "\nError reading ,End Of File reached";
+			return;
+		}
+		std::string temp;
+		in->getline(buffer, _buffer_length);
+		buffer[(std::find(buffer, buffer + strlen(buffer), ';') - buffer)] = '\0';
+		char* t = strtok(buffer, whitespace);
+		while (t)
+		{
+			temp = t;
+			arg_list.push(temp);
+			t = strtok(nullptr, whitespace);
+		}
+		_parse_next(in, out);		
+	}
+	void _parse_next(std::ifstream* in, int& out)
+	{
+		std::string temp;
+		_parse_next(in, temp);
+		out = std::stoi(temp);
+	}
+	void _parse_next(std::ifstream* in, float& out)
+	{
+		std::string temp;
+		_parse_next(in, temp);
+		out = std::stof(temp.c_str());
+	}
+
 	//read from stream
 	void vector3D::read(std::ifstream* jms_stream,int version)
 	{		
-		*jms_stream >> x;
-		*jms_stream >> y;
-		*jms_stream >> z;
+		_parse_next(jms_stream, x);
+		_parse_next(jms_stream, y);
+		_parse_next(jms_stream, z);
 	}
 	//single line declaration on current line
 	void vector3D::write(std::ofstream* jms_stream,int version)
@@ -19,10 +65,10 @@ namespace jms
 	//read from stream
 	void vector4D::read(std::ifstream* jms_stream,int version)
 	{
-		*jms_stream >> x;
-		*jms_stream >> y;
-		*jms_stream >> z;
-		*jms_stream >> w;
+		_parse_next(jms_stream, x);
+		_parse_next(jms_stream, y);
+		_parse_next(jms_stream, z);
+		_parse_next(jms_stream, w);
 	}
 	//single line declaration on current line
 	void vector4D::write(std::ofstream* jms_stream,int version)
@@ -38,15 +84,15 @@ namespace jms
 		switch (version)
 		{
 		case 8200:
-			std::getline(*jms_stream, name);
-			*jms_stream >> first_child_node_index;
-			*jms_stream >> sibling_node_index;
+			_parse_next(jms_stream, name);
+			_parse_next(jms_stream, first_child_node_index);
+			_parse_next(jms_stream, sibling_node_index);
 			rotation.read(jms_stream, version);
 			position.read(jms_stream, version);
 			break;
 		case 8210:
-			std::getline(*jms_stream, name);
-			*jms_stream >> parent_node_index;
+			_parse_next(jms_stream, name);
+			_parse_next(jms_stream, parent_node_index);
 			rotation.read(jms_stream, version);
 			position.read(jms_stream, version);
 			break;
@@ -77,14 +123,37 @@ namespace jms
 	//read from stream
 	void material::read(std::ifstream* jms_stream,int version)
 	{
-		std::getline(*jms_stream, name);
-		std::getline(*jms_stream, tif_path);
+		switch (version)
+		{
+		case 8200:
+			_parse_next(jms_stream, name);
+			_parse_next(jms_stream, tif_path);
+			break;
+		case 8210:
+			_parse_next(jms_stream, name);
+			_parse_next(jms_stream, LOD);
+			_parse_next(jms_stream, Permutation);
+			_parse_next(jms_stream, Region);
+			break;
+		default:;
+		}
 	}
 	//write to stream
 	void material::write(std::ofstream* jms_stream, int version)
 	{
-		*jms_stream << name << '\n';
-		*jms_stream << tif_path << '\n';
+		switch (version)
+		{
+		case 8200:
+			*jms_stream << name << '\n';
+			*jms_stream << tif_path << '\n';
+			break;
+		case 8210:
+			*jms_stream << name << '\n';
+			*jms_stream << LOD << '\t' << Permutation << '\t' << Region << '\n';
+			break;
+		default:;
+		}
+
 	}
 	//read from stream
 	void marker::read(std::ifstream* jms_stream, int version)
@@ -92,19 +161,19 @@ namespace jms
 		switch (version)
 		{
 		case 8200:
-			std::getline(*jms_stream, name);
-			*jms_stream >> region;
-			*jms_stream >> parent_node;
+			_parse_next(jms_stream, name);
+			_parse_next(jms_stream, region);
+			_parse_next(jms_stream, parent_node);
 			rotation.read(jms_stream, version);
 			position.read(jms_stream, version);
-			*jms_stream >> radius;
+			_parse_next(jms_stream, radius);
 			break;
 		case 8210:
-			std::getline(*jms_stream, name);
-			*jms_stream >> parent_node;
+			_parse_next(jms_stream, name);
+			_parse_next(jms_stream, parent_node);
 			rotation.read(jms_stream, version);
 			position.read(jms_stream, version);
-			*jms_stream >> radius;
+			_parse_next(jms_stream, radius);
 			break;
 		default: std::cout << "\nUnable to read marker data,unsupported version : " << version;
 		}
@@ -135,7 +204,7 @@ namespace jms
 	//read from stream
 	void region::read(std::ifstream* jms_stream, int version)
 	{
-		std::getline(*jms_stream, name);
+		_parse_next(jms_stream, name);
 	}
 	//write to stream
 	void region::write(std::ofstream* jms_stream, int version)
@@ -150,12 +219,12 @@ namespace jms
 		switch (version)
 		{
 		case 8200://2 nodes MAX lol
-			*jms_stream >> t;
+			_parse_next(jms_stream, t);
 			node_indices.push_back(t);
 			position.read(jms_stream, version);
 			normal.read(jms_stream, version);
-			*jms_stream >> t;
-			*jms_stream >> f;
+			_parse_next(jms_stream, t);
+			_parse_next(jms_stream, f);
 			node_weights.push_back(1 - f);
 			if (t != -1)
 			{
@@ -168,21 +237,21 @@ namespace jms
 			int n_count, t_count;
 			position.read(jms_stream, version);
 			normal.read(jms_stream, version);
-			*jms_stream >> n_count;
+			_parse_next(jms_stream, n_count);
 			while (n_count--)
 			{
-				*jms_stream >> t;
-				*jms_stream >> f;
+				_parse_next(jms_stream, t);
+				_parse_next(jms_stream, f);
 				node_indices.push_back(t);
 				node_weights.push_back(f);
 			}
-			*jms_stream >> t_count;
+			_parse_next(jms_stream, t_count);
 			//i support only one coordinate :P
 			while (t_count--)
 			{   //x,y reading
-				*jms_stream >> f;
+				_parse_next(jms_stream, f);
 				tex_cords.x = f;
-				*jms_stream >> f;
+				_parse_next(jms_stream, f);
 				tex_cords.y = f;
 				tex_cords.z = 0.0;
 			}
@@ -230,21 +299,21 @@ namespace jms
 		switch (version)
 		{
 		case 8200:
-			*jms_stream >> region_index;
-			*jms_stream >> shader_index;
+			_parse_next(jms_stream, region_index);
+			_parse_next(jms_stream, shader_index);
 			n = 3;
 			while (n--)
 			{
-				*jms_stream >> t;
+				_parse_next(jms_stream, t);
 				vertex_indices.push_back(t);
 			}
 			break;
 		case 8210:
-			*jms_stream >> shader_index;
+			_parse_next(jms_stream, shader_index);
 			n = 3;
 			while (n--)
 			{
-				*jms_stream >> t;
+				_parse_next(jms_stream, t);
 				vertex_indices.push_back(t);
 			}
 			break;
@@ -270,7 +339,7 @@ namespace jms
 	}
 	jms::jms()
 	{
-		version = 8200;
+		version = 8210;
 		checksum = 0;
 	}
 	jms::jms(int arg0)
@@ -283,19 +352,27 @@ namespace jms
 		std::ifstream* jms_stream = new std::ifstream();
 		jms_stream->open(file_loc.c_str(), std::ios::in);
 
-		*jms_stream >> version;
-		switch(version)
+		if (jms_stream->is_open())
 		{
-		case 8200:
-			read_jms8200(jms_stream);
-			break;
-		case 8210:
-			read_jms8210(jms_stream);
-			break;
-		default:
-			std::cout << "\nUnsupported version : " << version;
-			break;
+			_parse_next(jms_stream, version);
+			switch (version)
+			{
+			case 8200:
+				read_jms8200(jms_stream);
+				break;
+			case 8210:
+				read_jms8210(jms_stream);
+				break;
+			default:
+				std::cout << "\nUnsupported version : " << version;
+				break;
+			}
 		}
+		else
+		{
+			std::cout << "\nFile doesnt exist : " << file_loc;
+		}
+
 		jms_stream->close();
 		delete jms_stream;
 	}
@@ -323,43 +400,43 @@ namespace jms
 	void jms::read_jms8200(std::ifstream* jms_stream)
 	{
 		int n;
-		*jms_stream >> checksum;
-		*jms_stream >> n;//node count
+		_parse_next(jms_stream, checksum);
+		_parse_next(jms_stream, n);//node count
 		while (n--)
 		{
 			node t_node;
 			t_node.read(jms_stream, version);
 			node_list.push_back(t_node);
 		}
-		*jms_stream >> n;//material count
+		_parse_next(jms_stream, n);//material count
 		while (n--)
 		{
 			material t_mat;
 			t_mat.read(jms_stream, version);
 			material_list.push_back(t_mat);
 		}
-		*jms_stream >> n;//marker count
+		_parse_next(jms_stream, n);//marker count
 		while (n--)
 		{
 			marker t_mark;
 			t_mark.read(jms_stream, version);
 			marker_list.push_back(t_mark);
 		}
-		*jms_stream >> n;//region count
+		_parse_next(jms_stream, n);//region count
 		while (n--)
 		{
 			region t_reg;
 			t_reg.read(jms_stream, version);
 			region_list.push_back(t_reg);
 		}
-		*jms_stream >> n;//vertex count
+		_parse_next(jms_stream, n);//vertex count
 		while (n--)
 		{
 			vertex t_vertex;
 			t_vertex.read(jms_stream, version);
 			vertex_list.push_back(t_vertex);
 		}
-		*jms_stream >> n;//triangle list
+		_parse_next(jms_stream, n);//triangle list
 		while (n--)
 		{
 			triangle t_tri;
@@ -370,47 +447,47 @@ namespace jms
 	void jms::read_jms8210(std::ifstream* jms_stream)
 	{
 		int n;
-		*jms_stream >> n;//node count
+		_parse_next(jms_stream, n);//node count
 		while (n--)
 		{
 			node t_node;
 			t_node.read(jms_stream, version);
 			node_list.push_back(t_node);
 		}
-		*jms_stream >> n;//material count
+		_parse_next(jms_stream, n);//material count
 		while (n--)
 		{
 			material t_mat;
 			t_mat.read(jms_stream, version);
 			material_list.push_back(t_mat);
 		}
-		*jms_stream >> n;//marker count
+		_parse_next(jms_stream, n);//marker count
 		while (n--)
 		{
 			marker t_mark;
 			t_mark.read(jms_stream, version);
 			marker_list.push_back(t_mark);
 		}
-		*jms_stream >> n;//INSTANCE XREF PATHS count
+		_parse_next(jms_stream, n);//INSTANCE XREF PATHS count
 		if (n)
 		{
 			std::cout << "\nFound unsupported field INSTANCE XREF PATHS\nTerminating Parser\n";
 			return;
 		}
-		*jms_stream >> n;//INSTANCE MARKERS count
+		_parse_next(jms_stream, n);//INSTANCE MARKERS count
 		if (n)
 		{
 			std::cout << "\nFound unsupported field INSTANCE MARKERS\nTerminating Parser\n";
 			return;
 		}
-		*jms_stream >> n;//vertex count
+		_parse_next(jms_stream, n);//vertex count
 		while (n--)
 		{
 			vertex t_vertex;
 			t_vertex.read(jms_stream, version);
 			vertex_list.push_back(t_vertex);
 		}
-		*jms_stream >> n;//triangle list
+		_parse_next(jms_stream, n);//triangle list
 		while (n--)
 		{
 			triangle t_tri;

@@ -15,7 +15,7 @@ using std::cout;
 void main(int argc,char* args[])
 {
 	//bullshit test
-	jms::jms jms_obj("C:\\n.txt");
+	jms::jms jms_obj("C:\\Users\\asus\\Desktop\\general's\\jms\\data\\objects\\characters\\elite\\render\\L1_elite.jms");
 
 	if (argc >=3)
 	{
