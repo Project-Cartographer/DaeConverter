@@ -26,4 +26,11 @@ namespace render_model_import
 
 		render_model_import(std::string model_dir);
 	};
+	struct jms_model_import
+	{
+	public:
+		std::string model_name;
+		std::vector<std::string> model_files;
+		jms_model_import(std::string directory);
+	};
 }

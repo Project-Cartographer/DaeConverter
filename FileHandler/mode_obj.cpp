@@ -59,6 +59,7 @@ string Get_string(char* mem, int length)
 	
 	return ret;
 }
+section_data::section_data(){}
 section_data::section_data(dfbt* header_ptr, dfbt_list* my_dfbt_list,bool uncompressed)
 {
 	
@@ -190,10 +191,7 @@ section_data::section_data(dfbt* header_ptr, dfbt_list* my_dfbt_list,bool uncomp
 
 	Generate_Faces(uncompressed);
 }
-section_data::~section_data()
-{
-	
-}
+section_data::~section_data(){}
 void section_data::Generate_Faces(bool uncompressed)
 {
 	if (!uncompressed)
@@ -800,7 +798,7 @@ void mode::Dump_render_model(string file_loc)
 
 				for (int i = 0; i < 4; i++)
 				{
-					*(__int8*)(vertex + 0x2C + i * 0x4) = (__int8)temp.nodes[i].index;
+					*(int*)(vertex + 0x2C + i * 0x4) = temp.nodes[i].index;
 					*(float*)(vertex + 0x1C + i * 0x4) = temp.nodes[i].weight;			
 					
 				}
@@ -1087,7 +1085,7 @@ void section_data::Load_mesh_recursive(aiNode* node, const aiScene* my_scene, co
 			aiBone* t_bone = t_mesh->mBones[j];
 			aiVertexWeight* t_weight = t_bone->mWeights;
 
-			int t_node_map_index = _get_node_map_index(t_bone->mName.C_Str(), nodes_list);
+			int t_node_map_index = _get_node_map_by_node_name(t_bone->mName.C_Str(), nodes_list);
 
 			for (int k = 0; k <  t_bone->mNumWeights; k++)
 			{
@@ -1141,7 +1139,7 @@ void section_data::Load_mesh_recursive(aiNode* node, const aiScene* my_scene, co
 		Load_mesh_recursive(node->mChildren[i], my_scene,nodes_list);
 
 }
-int section_data::_get_node_map_index(std::string bone_name, const vector<nodes> &nodes_list)
+int section_data::_get_node_map_by_node_name(std::string bone_name, const vector<nodes> &nodes_list)
 {
 
 	for (int i = 0; i < node_map_list.size(); i++)
@@ -1331,7 +1329,356 @@ int mode::find_node_in_node_list(std::string name)
 	}
 	return -1;
 }
+//Each JMS file has its material declaration allowing materials of the same name to define different region,perm and LOD
+//i.e. different sections declared under the material definitions
+int mode::_get_section_index(const jms::material& mat_def)
+{
+	///look for exisitng identicals
+	int i = 0;
+	while(1)
+	{
+		if (i == region_list.size())
+		{
+			regions t_region;
+			t_region.name = mat_def.Region;
+			region_list.push_back(t_region);
+		}
 
+		regions& t_region_ref = region_list[i];
+		if (mat_def.Region.compare(t_region_ref.name) == 0)
+		{			
+			int j = 0;
+			while(1)
+			{
+				if (j == t_region_ref.perms.size())
+				{
+					permutations t_perm;
+					t_perm.name = mat_def.Permutation;
+					t_region_ref.perms.push_back(t_perm);
+				}
+
+				permutations& t_perm_ref = t_region_ref.perms[j];
+				if (mat_def.Permutation.compare(t_perm_ref.name) == 0)
+				{
+					section_data t_section;
+					int ret = section_data_list.size();
+
+					switch (mat_def.LOD[1])
+					{
+					case '1':
+						if (t_perm_ref.L1 != -1)
+							ret = t_perm_ref.L1;
+						else
+						{
+							section_data_list.push_back(t_section);
+							t_perm_ref.L1 = (short)ret;
+						}
+						break;
+					case '2':
+						if (t_perm_ref.L2 != -1)
+							ret = t_perm_ref.L2;
+						else
+						{
+							section_data_list.push_back(t_section);
+							t_perm_ref.L2 = (short)ret;
+						}
+						break;
+					case '3':
+						if (t_perm_ref.L3 != -1)
+							ret = t_perm_ref.L3;
+						else
+						{
+							section_data_list.push_back(t_section);
+							t_perm_ref.L3 = (short)ret;
+						}
+						break;
+					case '4':
+						if (t_perm_ref.L4 != -1)
+							ret = t_perm_ref.L4;
+						else
+						{
+							section_data_list.push_back(t_section);
+							t_perm_ref.L4 = (short)ret;
+						}
+						break;
+					case '5':
+						if (t_perm_ref.L5 != -1)
+							ret = t_perm_ref.L5;
+						else
+						{
+							section_data_list.push_back(t_section);
+							t_perm_ref.L5 = (short)ret;
+						}
+						break;
+					case '6':
+						if (t_perm_ref.L6 != -1)
+							ret = t_perm_ref.L6;
+						else
+						{
+							section_data_list.push_back(t_section);
+							t_perm_ref.L6 = (short)ret;
+						}
+						break;						
+					}
+					return ret;
+				}
+			}
+			j++;
+		}
+		i++;
+	}
+
+}
+int mode::_get_material_index(const jms::material& mat_def)
+{
+	for (int i = 0; i < material_list.size(); i++)
+		if (mat_def.name.compare(material_list[i].shader)==0)
+			return i;
+
+	material t_mat;
+	t_mat.shader = mat_def.name;
+	material_list.push_back(t_mat);
+	
+	return material_list.size() - 1;
+}
+mode::mode(render_model_import::jms_model_import& my_import)
+{
+	name = my_import.model_name;
+
+	for (int jms_file_iter = 0; jms_file_iter < my_import.model_files.size(); jms_file_iter++)
+	{
+		jms::jms* my_file = new jms::jms(my_import.model_files[jms_file_iter]);
+
+		if (jms_file_iter == 0)
+			Load_bones(my_file);
+		Load_markers(my_file);
+
+		vector<JMS_section_intermediate> intermediate_list;
+		//iterate through material declaration and generate intermediate structures to be added into respective sections
+		for (int jms_mat_iter = 0; jms_mat_iter < my_file->material_list.size(); jms_mat_iter++)
+		{
+			jms::material& t_mat = my_file->material_list[jms_mat_iter];
+
+			JMS_section_intermediate t_intermediate = JMS_section_intermediate(_get_section_index(t_mat), _get_material_index(t_mat), my_file->vertex_list.size());
+		
+			intermediate_list.push_back(t_intermediate);
+		}
+		//add triangles to respective intermediate sections
+		for (int triangle_index = 0; triangle_index < my_file->triangle_list.size(); triangle_index++)
+		{
+			jms::triangle& t_triangle = my_file->triangle_list[triangle_index];
+
+			intermediate_list[t_triangle.shader_index]._add_triangle(t_triangle, my_file->vertex_list);
+		}		
+		//now add intermediates to their sections in form of parta
+		for (int intermediate_iter = 0; intermediate_iter < intermediate_list.size(); intermediate_iter++)
+		{
+			JMS_section_intermediate& current_intermediate = intermediate_list[intermediate_iter];
+			section_data& current_section = section_data_list[current_intermediate.section_pallete_index];
+
+			parts t_part;
+
+			t_part.start_index = current_section.strip_index_list.size();
+			t_part.length = current_intermediate.t_triangle_list.size() * 0x3;
+			t_part.material_index = current_intermediate.material_pallete_index;
+
+			int vertex_start_offset = current_section.vertex_list.size();
+
+			///current_section.vertex_list.insert(current_section.vertex_list.end(), current_intermediate.t_vertex_list.begin(), current_intermediate.t_vertex_list.end());
+			//add RAW vertices
+			for (int i = 0; i < current_intermediate.t_vertex_list.size(); i++)
+			{
+				jms::vertex& t_vertex = current_intermediate.t_vertex_list[i];
+
+				RAW_vertex t_RAW_vertex = { 0 };
+				
+				t_RAW_vertex.pos.x = t_vertex.position.x*0.01;
+				t_RAW_vertex.pos.y = t_vertex.position.y*0.01;
+				t_RAW_vertex.pos.z = t_vertex.position.z*0.01;
+
+				t_RAW_vertex.normal.x = t_vertex.normal.x;
+				t_RAW_vertex.normal.y = t_vertex.normal.y;
+				t_RAW_vertex.normal.z = t_vertex.normal.z;
+
+				t_RAW_vertex.tex_cord.x = t_vertex.tex_cords.x;
+				t_RAW_vertex.tex_cord.y = t_vertex.tex_cords.y;
+
+				///reset the node weights 
+				for (int j = 0; j < 4; j++)
+				{
+					t_RAW_vertex.nodes[j].index = -1;
+					t_RAW_vertex.nodes[j].weight = 0.0f;
+				}
+				
+				for (int j = 0; j < t_vertex.node_indices.size(); j++)
+				{
+					//node map stuff
+					t_RAW_vertex.nodes[j].index = current_section._get_node_map_by_node_name(my_file->node_list[t_vertex.node_indices[j]].name, nodes_list);
+					t_RAW_vertex.nodes[j].weight = t_vertex.node_weights[j];
+				}
+
+				current_section.vertex_list.push_back(t_RAW_vertex);
+			}
+			//add triangle faces 
+			for (int face_iter = 0; face_iter < current_intermediate.t_triangle_list.size(); face_iter++)
+			{
+				jms::triangle& t_triangle = current_intermediate.t_triangle_list[face_iter];
+
+				triangle_face t_face;
+				
+				t_face.v0 = vertex_start_offset + t_triangle.vertex_indices[0];
+				t_face.v1 = vertex_start_offset + t_triangle.vertex_indices[1];
+				t_face.v2 = vertex_start_offset + t_triangle.vertex_indices[2];
+
+				t_part.face_list.push_back(t_face);
+			}
+			current_section.parts_list.push_back(t_part);
+		}
+		delete my_file;
+	}
+}
+void mode::Load_bones(jms::jms* my_file)
+{
+	//Rearranging JMS nodes in various layers
+	///global base
+	JMS_node_intermediate node_base = JMS_node_intermediate("", { 0,0,0 }, { 0,0,0,0 }, nullptr);
+
+	for (int i = 0; i < my_file->node_list.size(); i++)
+	{
+		jms::node& t_JMS_node = my_file->node_list[i];
+
+		JMS_node_intermediate* t_intJMS_parent;
+
+		//here i assume that parent nodes would be mentioned before child nodes,at least
+		if (t_JMS_node.parent_node_index != -1)
+		{
+			t_intJMS_parent = node_base._get_child_node_by_name(my_file->node_list[t_JMS_node.parent_node_index].name);
+			if (t_intJMS_parent == nullptr)
+				throw new exception("Incorrect sequence of nodes");
+		}
+		else
+			t_intJMS_parent = &node_base;
+
+		///terrible declaraion and initialisation,i know
+		JMS_node_intermediate* t_intJMS_node = new JMS_node_intermediate(
+			t_JMS_node.name,
+			{ t_JMS_node.position.x*0.01f,t_JMS_node.position.y*0.01f,t_JMS_node.position.z*0.01f },
+			{ t_JMS_node.rotation.x,t_JMS_node.rotation.y,t_JMS_node.rotation.z,t_JMS_node.rotation.w },
+			t_intJMS_parent);
+
+		t_intJMS_parent->_add_child_node(t_intJMS_node);
+	}
+	//Actual addition into node pallete
+	int layer = 0;
+	vector<JMS_node_intermediate*> layer_nodes;
+
+	node_base._get_child_node_by_layer(layer_nodes, layer);
+	while (layer_nodes.size() != 0)
+	{
+		//add all those nodes into node_pallete
+		for (int i = 0; i < layer_nodes.size(); i++)
+		{
+			nodes t_node;
+
+			t_node.name = layer_nodes[i]->name;
+			t_node.parentNode = find_node_in_node_list(layer_nodes[i]->parent_node->name);
+			t_node.firstChildNode = -1;
+			t_node.nextSiblingNode = -1;
+			t_node.importNodeIndex = i;
+			//relative positioning
+			t_node.defaultTranslation.x = layer_nodes[i]->position.x- layer_nodes[i]->parent_node->position.x;
+			t_node.defaultTranslation.y = layer_nodes[i]->position.y - layer_nodes[i]->parent_node->position.y;
+			t_node.defaultTranslation.z = layer_nodes[i]->position.z - layer_nodes[i]->parent_node->position.z;
+			//relative rotation
+			t_node.defaultRotation.i = layer_nodes[i]->rotation.i - layer_nodes[i]->parent_node->rotation.i;
+			t_node.defaultRotation.j = layer_nodes[i]->rotation.j - layer_nodes[i]->parent_node->rotation.j;
+			t_node.defaultRotation.k = layer_nodes[i]->rotation.k - layer_nodes[i]->parent_node->rotation.k;
+			t_node.defaultRotation.w = layer_nodes[i]->rotation.w - layer_nodes[i]->parent_node->rotation.w;
+
+			t_node.inverseScale = 1.0f;
+
+			//now the inverse node transform
+			real_matrix4x3 transform = real_matrix4x3(layer_nodes[i]->rotation, layer_nodes[i]->position);
+			transform.inverse();
+
+			t_node.inverseForward = { transform.forward.i,transform.forward.j,transform.forward.k };
+			t_node.inverseLeft = { transform.left.i,transform.left.j,transform.left.k };
+			t_node.inverseUp = { transform.up.i,transform.up.j,transform.up.k };
+			t_node.inversePosition = { transform.translation.x,transform.translation.y,transform.translation.z };
+
+			t_node.distanceFromParent = sqrt(
+				t_node.defaultTranslation.x*t_node.defaultTranslation.x
+				+ t_node.defaultTranslation.y*t_node.defaultTranslation.y
+				+ t_node.defaultTranslation.z*t_node.defaultTranslation.z);
+
+			//now look for the parent and iterate through siblings
+			if (nodes_list.size())
+			{
+				if (nodes_list[t_node.parentNode].firstChildNode == -1)
+					nodes_list[t_node.parentNode].firstChildNode = nodes_list.size();
+				else
+				{
+					int t = nodes_list[t_node.parentNode].firstChildNode;
+					while (1)
+					{
+						if (nodes_list[t].nextSiblingNode == -1)
+						{
+							nodes_list[t].nextSiblingNode = nodes_list.size();
+							break;
+						}
+						t = nodes_list[t].nextSiblingNode;
+					}
+				}
+			}
+
+			nodes_list.push_back(t_node);
+		}
+		layer_nodes.clear();
+		layer = layer + 1;
+		node_base._get_child_node_by_layer(layer_nodes, layer);
+	}
+}
+void mode::Load_markers(jms::jms* my_file)
+{
+	for (int i = 0; i < my_file->marker_list.size(); i++)
+	{
+		jms::marker& jms_marker = my_file->marker_list[i];
+		
+		int marker_group_index = _get_marker_group(jms_marker.name);
+
+		markers t_marker = { 0 };
+
+		t_marker.regionIndex = -1;
+		t_marker.permutationIndex = -1;
+		t_marker.nodeIndex = jms_marker.parent_node;
+		t_marker.translation.x = jms_marker.position.x*0.01;
+		t_marker.translation.y = jms_marker.position.y*0.01;
+		t_marker.translation.z = jms_marker.position.z*0.01;
+		t_marker.rotation.i = jms_marker.rotation.x;
+		t_marker.rotation.j = jms_marker.rotation.y;
+		t_marker.rotation.k = jms_marker.rotation.z;
+		t_marker.rotation.w = jms_marker.rotation.w;
+
+		markers_groups_list[marker_group_index].markers_list.push_back(t_marker);
+	}
+}
+int mode::_get_marker_group(std::string name)
+{
+	int ret = markers_groups_list.size();
+
+	for (int i = 0; i < markers_groups_list.size(); i++)
+	{
+		if (markers_groups_list[i].name.compare(name) == 0)
+			return i;
+	}
+	//not found create and add a new group
+	markers_group t_mgroup;
+	t_mgroup.name = name;
+	t_mgroup.markers_list.resize(0);
+	markers_groups_list.push_back(t_mgroup);
+
+	return ret;
+}
 #pragma endregion definition of functions that load from other file formats
 
 #pragma region friend_functions
@@ -1344,3 +1691,12 @@ void replace_marker_stuff(mode* dest, mode* src)
 	dest->markers_groups_list.assign(src->markers_groups_list.cbegin(), src->markers_groups_list.cend());
 }
 #pragma endregion
+permutations::permutations()
+{
+	name = "";
+	L1 = L2 = L3 = L4 = L5 = L6 = -1;
+}
+regions::regions()
+{
+	name = "";
+}

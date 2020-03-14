@@ -37,3 +37,9 @@
 /x64/Debug
 /DaeConverter.VC.db
 /DaeConverter.VC.VC.opendb
+*.pdb
+*.log
+*.tlog
+*.ipdb
+*.iobj
+*.JMS

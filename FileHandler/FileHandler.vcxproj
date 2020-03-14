@@ -160,14 +160,17 @@
     <ClCompile Include="data_structures.cpp" />
     <ClCompile Include="directory_functions.cpp" />
     <ClCompile Include="jms.cpp" />
+    <ClCompile Include="JMS_intermediate.cpp" />
     <ClCompile Include="mode_obj.cpp" />
     <ClCompile Include="render_model_import.cpp" />
     <ClCompile Include="Source.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="4x3_transform.h" />
     <ClInclude Include="data_structures.h" />
     <ClInclude Include="directory_functions.h" />
     <ClInclude Include="jms.h" />
+    <ClInclude Include="JMS_intermediate.h" />
     <ClInclude Include="render_model_import.h" />
     <ClInclude Include="TAG_BLOCK_structures.h" />
     <ClInclude Include="mode_obj.h" />

@@ -4,7 +4,6 @@
 
 #include"mode_obj.h"
 #include"render_model_import.h"
-#include"jms.h"
 
 using std::ifstream;
 using std::ofstream;
@@ -15,7 +14,7 @@ using std::cout;
 void main(int argc,char* args[])
 {
 	//bullshit test
-	jms::jms jms_obj("C:\\Users\\asus\\Desktop\\general's\\jms\\data\\objects\\characters\\elite\\render\\L1_elite.jms");
+	//jms::jms jms_obj("C:\\Users\\asus\\Desktop\\general's\\jms\\data\\objects\\characters\\elite\\render\\L1_elite.jms");
 
 	if (argc >=3)
 	{
@@ -30,14 +29,35 @@ void main(int argc,char* args[])
 		{
 			std::string mode_dir = directory + args[2];
 
-			cout << "Compiling file " << mode_dir.c_str() << '\n';
+			cout << "Compiling DAE file " << mode_dir.c_str() << '\n';
 
 			render_model_import::render_model_import* my_obj = new render_model_import::render_model_import(mode_dir);
 			mode* my_render_model = new mode(*my_obj);
 			
 			string temp = mode_dir + "\\" + get_current_folder(mode_dir) + ".render_model";
 			my_render_model->Dump_render_model(temp);
-			cout << "Compiled file \n";
+
+			cout << "Compiled file : " << temp << "\n";
+
+			//delete my_render_model;
+			//delete my_obj;
+		}
+		else if (!strcmp(args[1], "-compileJMS"))
+		{
+			std::string mode_dir = directory + args[2];
+
+			cout << "Compiling JMS file " << mode_dir.c_str() << '\n';
+
+			render_model_import::jms_model_import *my_obj = new render_model_import::jms_model_import(mode_dir);
+			mode* my_render_model = new mode(*my_obj);
+
+			string temp = directory + "\\" + get_current_folder(mode_dir) + ".render_model";
+			my_render_model->Dump_render_model(temp);
+
+			cout << "Compiled file : " << temp << "\n";
+
+			//delete my_render_model;
+			//delete my_obj;
 		}
 		//decompile render_model to obj and dae(BETA)
 		else if (!strcmp(args[1], "-decompile"))
@@ -73,6 +93,8 @@ void main(int argc,char* args[])
 			CreateDirectoryA(output_dir.c_str(), 0);
 
 			my_mode_obj->Test_Dump(output_dir);
+
+			delete my_mode_obj;
 		}
 		else if ((!strcmp(args[1], "-replace-node")))
 		{
@@ -118,6 +140,9 @@ void main(int argc,char* args[])
 			replace_node_data(dest_mode_obj, source_mode_obj);
 
 			dest_mode_obj->Dump_render_model(dest_loc);
+
+			delete dest_mode_obj;
+			delete source_mode_obj;
 		}
 		else if ((!strcmp(args[1], "-replace-marker")))
 		{
@@ -163,6 +188,9 @@ void main(int argc,char* args[])
 			replace_marker_stuff(dest_mode_obj, source_mode_obj);
 
 			dest_mode_obj->Dump_render_model(dest_loc);
+
+			delete dest_mode_obj;
+			delete source_mode_obj;
 		}
 	}
 }

@@ -47,4 +47,16 @@ namespace render_model_import
 				region_list.push_back(t_region);
 		}
 	}
+	jms_model_import::jms_model_import(std::string directory)
+	{
+		model_name = get_current_folder(directory);
+		read_directory(directory, model_files);
+		//remove first two enteries as they are CRAP
+		model_files.erase(model_files.begin());
+		model_files.erase(model_files.begin());
+
+		//add directory infront of model files
+		for (int i = 0; i < model_files.size(); i++)
+			model_files[i] = directory + '\\' + model_files[i];
+	}
 }

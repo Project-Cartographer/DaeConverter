@@ -10,9 +10,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Source.cpp">
-      <Filter>Mode</Filter>
-    </ClCompile>
     <ClCompile Include="mode_obj.cpp">
       <Filter>Mode</Filter>
     </ClCompile>
@@ -28,6 +25,10 @@
     <ClCompile Include="jms.cpp">
       <Filter>Mode</Filter>
     </ClCompile>
+    <ClCompile Include="JMS_intermediate.cpp">
+      <Filter>Mode</Filter>
+    </ClCompile>
+    <ClCompile Include="Source.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="data_structures.h">
@@ -46,6 +47,12 @@
       <Filter>Mode</Filter>
     </ClInclude>
     <ClInclude Include="jms.h">
+      <Filter>Mode</Filter>
+    </ClInclude>
+    <ClInclude Include="4x3_transform.h">
+      <Filter>Mode</Filter>
+    </ClInclude>
+    <ClInclude Include="JMS_intermediate.h">
       <Filter>Mode</Filter>
     </ClInclude>
   </ItemGroup>

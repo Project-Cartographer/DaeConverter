@@ -17,6 +17,8 @@
 
 #include"data_structures.h"
 #include"render_model_import.h"
+#include"jms.h"
+#include"JMS_intermediate.h"
 
 //was pissed off due to numerous problems therefore imported everything
 #include "assimp/cimport.h"
@@ -64,7 +66,7 @@ struct quaternion
 };
 struct node_info
 {
-	__int8 index;
+	int index;
 	float weight;
 };
 struct material
@@ -118,11 +120,17 @@ struct permutations
 	__int8 L4;
 	__int8 L5;
 	__int8 L6;
+
+	//default constructor
+	permutations();
 };
 struct regions
 {
 	string name;
 	vector<permutations> perms;
+
+	//default constructor
+	regions();
 };
 struct nodes
 {
@@ -153,7 +161,6 @@ struct markers
 struct markers_group
 {
 	string name;
-
 	vector<markers> markers_list;
 };
 
@@ -161,6 +168,7 @@ struct markers_group
 class section_data
 {
 public :
+	section_data();
 	section_data(dfbt*, dfbt_list*,bool);
 	section_data(const aiScene*,int material_start_index, const vector<nodes> &nodes_list);
 	~section_data();
@@ -171,10 +179,9 @@ public :
 	vector<node_map> node_map_list;
 
 	void Generate_Faces(bool);
-
+	int _get_node_map_by_node_name(std::string bone_name, const vector<nodes> &nodes_list);
 private:
-	void Load_mesh_recursive(aiNode* node, const aiScene* my_scene, const vector<nodes> &nodes_list);//utilised during dae loading
-	int _get_node_map_index(std::string bone_name, const vector<nodes> &nodes_list);
+	void Load_mesh_recursive(aiNode* node, const aiScene* my_scene, const vector<nodes> &nodes_list);//utilised during dae loading	
 	int access_index;
 
 	int material_start_index;//utilised during dae loading
@@ -184,6 +191,7 @@ class mode
 public:
 	string name;
 	mode(render_model_import::render_model_import&);//load from collada files
+	mode(render_model_import::jms_model_import&);//load from jms files
 	mode(tag_data_struct&);//constructor doesnt copy,use the existing data in the memory
 	~mode();//unallocates the memory for the mode_data
 
@@ -226,9 +234,23 @@ private:
 	vector3d Calculate_centroid(parts& my_parts,section_data& my_section);
 	list<int> Generate_strip_indices(parts& my_parts);
 
+	//Assimp based functions
 	void Load_bone(std::string name, const aiScene* my_scene);
 	void Link_bones(const aiScene* my_scene);
+
+	//jms node function
+	void Load_bones(jms::jms*);
+	///marker
+	void Load_markers(jms::jms*);
+	int _get_marker_group(std::string);
+
 	int find_node_in_node_list(std::string name);//returns the index of node
+
+	///JMS based functions
+	//function returns a section index based according to the declarations in material field
+	int _get_section_index(const jms::material&);
+	//functions returns a material index based as per the subsequent data(LOD,Region,Perm) supplied
+	int _get_material_index(const jms::material&);
 
 	void Dump_obj_data(section_data&, string file);	
 	void Dump_collada_data(string file);
