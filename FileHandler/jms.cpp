@@ -98,6 +98,13 @@ namespace jms
 			break;
 		default: std::cout << "\nUnable to read node data,unsupported version : " << version;
 		}
+		//do some cleanup for node names
+		int pos = name.find("frame_");
+		if (pos != std::string::npos)
+			name.erase(pos, 6);
+		pos = name.find("b_");
+		if (pos != std::string::npos)
+			name.erase(pos, 2);
 	}
 	//write to stream
 	void node::write(std::ofstream* jms_stream, int version)
