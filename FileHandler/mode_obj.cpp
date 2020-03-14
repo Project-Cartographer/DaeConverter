@@ -1650,7 +1650,7 @@ void mode::Load_markers(jms::jms* my_file)
 
 		t_marker.regionIndex = -1;
 		t_marker.permutationIndex = -1;
-		t_marker.nodeIndex = jms_marker.parent_node;
+		t_marker.nodeIndex = find_node_in_node_list(my_file->node_list[jms_marker.parent_node].name);
 		t_marker.translation.x = jms_marker.position.x*0.01;
 		t_marker.translation.y = jms_marker.position.y*0.01;
 		t_marker.translation.z = jms_marker.position.z*0.01;
