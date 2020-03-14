@@ -1579,6 +1579,8 @@ void mode::Load_bones(jms::jms* my_file)
 	int layer = 0;
 	vector<JMS_node_intermediate*> layer_nodes;
 
+	int import_node_index = 0;
+	
 	node_base._get_child_node_by_layer(layer_nodes, layer);
 	while (layer_nodes.size() != 0)
 	{
@@ -1591,7 +1593,7 @@ void mode::Load_bones(jms::jms* my_file)
 			t_node.parentNode = find_node_in_node_list(layer_nodes[i]->parent_node->name);
 			t_node.firstChildNode = -1;
 			t_node.nextSiblingNode = -1;
-			t_node.importNodeIndex = i;
+			t_node.importNodeIndex = import_node_index++;
 			//relative positioning
 			t_node.defaultTranslation.x = layer_nodes[i]->position.x- layer_nodes[i]->parent_node->position.x;
 			t_node.defaultTranslation.y = layer_nodes[i]->position.y - layer_nodes[i]->parent_node->position.y;
