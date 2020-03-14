@@ -369,11 +369,17 @@ mode::mode(tag_data_struct& arg0)
 			temp_nodes.importNodeIndex = *(__int16*)(nodes_header_mem + 0xA);
 			temp_nodes.defaultTranslation = *(vector3d*)(nodes_header_mem + 0xC);
 			temp_nodes.defaultRotation = *(quaternion*)(nodes_header_mem + 0x18);
-			temp_nodes.inverseForward = *(vector3d*)(nodes_header_mem + 0x28);
-			temp_nodes.inverseLeft = *(vector3d*)(nodes_header_mem + 0x34);
-			temp_nodes.inverseUp = *(vector3d*)(nodes_header_mem + 0x40);
-			temp_nodes.inversePosition = *(vector3d*)(nodes_header_mem + 0x4C);
-			temp_nodes.inverseScale = *(float*)(nodes_header_mem + 0x58);
+			temp_nodes.inverseScale = *(float*)(nodes_header_mem + 0x28);
+			/*
+			*(vector3d*)(nodes_header_mem + 0x2C) = { nodes_list[i].inverseForward.x,nodes_list[i].inverseLeft.x,nodes_list[i].inverseUp.x };
+			*(vector3d*)(nodes_header_mem + 0x38) = { nodes_list[i].inverseForward.y,nodes_list[i].inverseLeft.y,nodes_list[i].inverseUp.y };
+			*(vector3d*)(nodes_header_mem + 0x44) = { nodes_list[i].inverseForward.z,nodes_list[i].inverseLeft.z,nodes_list[i].inverseUp.z };
+			*/
+			//reading from column major into row major matrix
+			temp_nodes.inverseForward = { *(float*)(nodes_header_mem + 0x2C),*(float*)(nodes_header_mem + 0x38),*(float*)(nodes_header_mem + 0x44) };
+			temp_nodes.inverseLeft = { *(float*)(nodes_header_mem + 0x2C + 0x4),*(float*)(nodes_header_mem + 0x38 + 0x4),*(float*)(nodes_header_mem + 0x44 + 0x4) };
+			temp_nodes.inverseUp = { *(float*)(nodes_header_mem + 0x2C + 0x8),*(float*)(nodes_header_mem + 0x38 + 0x8),*(float*)(nodes_header_mem + 0x44 + 0x8) };
+			temp_nodes.inversePosition = *(vector3d*)(nodes_header_mem + 0x50);
 			temp_nodes.distanceFromParent = *(float*)(nodes_header_mem + 0x5C);
 
 			nodes_list.push_back(temp_nodes);
@@ -873,11 +879,12 @@ void mode::Dump_render_model(string file_loc)
 			*(__int16*)(nodes_header_mem + 0xA) = nodes_list[i].importNodeIndex;
 			*(vector3d*)(nodes_header_mem + 0xC) = nodes_list[i].defaultTranslation;
 			*(quaternion*)(nodes_header_mem + 0x18) = nodes_list[i].defaultRotation;
-			*(vector3d*)(nodes_header_mem + 0x28) = nodes_list[i].inverseForward;
-			*(vector3d*)(nodes_header_mem + 0x34) = nodes_list[i].inverseLeft;
-			*(vector3d*)(nodes_header_mem + 0x40) = nodes_list[i].inverseUp;
-			*(vector3d*)(nodes_header_mem + 0x4C) = nodes_list[i].inversePosition;
-			*(float*)(nodes_header_mem + 0x58) = nodes_list[i].inverseScale;
+			*(float*)(nodes_header_mem + 0x28) = nodes_list[i].inverseScale;
+			//writing row major matrix into column major format
+			*(vector3d*)(nodes_header_mem + 0x2C) = { nodes_list[i].inverseForward.x,nodes_list[i].inverseLeft.x,nodes_list[i].inverseUp.x };
+			*(vector3d*)(nodes_header_mem + 0x38) = { nodes_list[i].inverseForward.y,nodes_list[i].inverseLeft.y,nodes_list[i].inverseUp.y };
+			*(vector3d*)(nodes_header_mem + 0x44) = { nodes_list[i].inverseForward.z,nodes_list[i].inverseLeft.z,nodes_list[i].inverseUp.z };
+			*(vector3d*)(nodes_header_mem + 0x50) = nodes_list[i].inversePosition;
 			*(float*)(nodes_header_mem + 0x5C) = nodes_list[i].distanceFromParent;
 
 			fout.write(nodes_header_mem, 0x60);
