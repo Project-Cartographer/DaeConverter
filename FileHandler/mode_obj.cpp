@@ -1613,10 +1613,11 @@ void mode::Load_bones(jms::jms* my_file)
 			t_node.inverseUp = { transform.up.i,transform.up.j,transform.up.k };
 			t_node.inversePosition = { transform.translation.x,transform.translation.y,transform.translation.z };
 
-			t_node.distanceFromParent = sqrt(
-				t_node.defaultTranslation.x*t_node.defaultTranslation.x
-				+ t_node.defaultTranslation.y*t_node.defaultTranslation.y
-				+ t_node.defaultTranslation.z*t_node.defaultTranslation.z);
+			if (t_node.parentNode != -1)
+				t_node.distanceFromParent = sqrt(
+					t_node.defaultTranslation.x*t_node.defaultTranslation.x
+					+ t_node.defaultTranslation.y*t_node.defaultTranslation.y
+					+ t_node.defaultTranslation.z*t_node.defaultTranslation.z);
 
 			//now look for the parent and iterate through siblings
 			if (nodes_list.size())
