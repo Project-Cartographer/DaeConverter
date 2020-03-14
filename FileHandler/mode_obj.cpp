@@ -1620,6 +1620,8 @@ void mode::Load_bones(jms::jms* my_file)
 					t_node.defaultTranslation.x*t_node.defaultTranslation.x
 					+ t_node.defaultTranslation.y*t_node.defaultTranslation.y
 					+ t_node.defaultTranslation.z*t_node.defaultTranslation.z);
+			else
+				t_node.distanceFromParent = 0.0f;
 
 			//now look for the parent and iterate through siblings
 			if (nodes_list.size())
