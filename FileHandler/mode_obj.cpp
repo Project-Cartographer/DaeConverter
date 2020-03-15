@@ -1594,26 +1594,41 @@ void mode::Load_bones(jms::jms* my_file)
 			t_node.firstChildNode = -1;
 			t_node.nextSiblingNode = -1;
 			t_node.importNodeIndex = import_node_index++;
-			//relative positioning
-			t_node.defaultTranslation.x = layer_nodes[i]->position.x- layer_nodes[i]->parent_node->position.x;
-			t_node.defaultTranslation.y = layer_nodes[i]->position.y - layer_nodes[i]->parent_node->position.y;
-			t_node.defaultTranslation.z = layer_nodes[i]->position.z - layer_nodes[i]->parent_node->position.z;
-			//relative rotation
-			t_node.defaultRotation.i = layer_nodes[i]->rotation.i - layer_nodes[i]->parent_node->rotation.i;
-			t_node.defaultRotation.j = layer_nodes[i]->rotation.j - layer_nodes[i]->parent_node->rotation.j;
-			t_node.defaultRotation.k = layer_nodes[i]->rotation.k - layer_nodes[i]->parent_node->rotation.k;
-			t_node.defaultRotation.w = layer_nodes[i]->rotation.w - layer_nodes[i]->parent_node->rotation.w;
-
 			t_node.inverseScale = 1.0f;
 
-			//now the inverse node transform
-			real_matrix4x3 transform = real_matrix4x3(layer_nodes[i]->rotation, layer_nodes[i]->position);
-			transform.inverse();
+			//node transform
+			real_matrix4x3 node_transform = real_matrix4x3(layer_nodes[i]->rotation, layer_nodes[i]->position);
 
-			t_node.inverseForward = { transform.forward.i,transform.forward.j,transform.forward.k };
-			t_node.inverseLeft = { transform.left.i,transform.left.j,transform.left.k };
-			t_node.inverseUp = { transform.up.i,transform.up.j,transform.up.k };
-			t_node.inversePosition = { transform.translation.x,transform.translation.y,transform.translation.z };
+			if (t_node.parentNode != -1)
+			{
+				//if has parent then calculate its translation and rotation wrt to parent
+				real_point3d local_position;
+				real_quaternion local_rotation;
+
+				real_matrix4x3 parent_transform = real_matrix4x3(layer_nodes[i]->parent_node->rotation, layer_nodes[i]->parent_node->position);
+				parent_transform.inverse();
+				
+				real_matrix4x3 local_transform;
+				real_matrix4x3::multiply(local_transform, parent_transform, node_transform );
+
+				local_transform.decompose_matrix(local_position, local_rotation);
+
+				//relative positioning
+				t_node.defaultTranslation = { local_position.x,local_position.y,local_position.z };
+				t_node.defaultRotation = { local_rotation.i,local_rotation.j,local_rotation.k ,local_rotation.w };
+			}
+			else
+			{
+				t_node.defaultTranslation = { layer_nodes[i]->position.x ,layer_nodes[i]->position.y ,layer_nodes[i]->position.z };
+				t_node.defaultRotation = { layer_nodes[i]->rotation.i,layer_nodes[i]->rotation.j,layer_nodes[i]->rotation.k,layer_nodes[i]->rotation.w };
+			}
+
+			//now the node inverse
+			node_transform.inverse();
+			t_node.inverseForward = { node_transform.forward.i,node_transform.forward.j,node_transform.forward.k };
+			t_node.inverseLeft = { node_transform.left.i,node_transform.left.j,node_transform.left.k };
+			t_node.inverseUp = { node_transform.up.i,node_transform.up.j,node_transform.up.k };
+			t_node.inversePosition = { node_transform.translation.x,node_transform.translation.y,node_transform.translation.z };
 
 			if (t_node.parentNode != -1)
 				t_node.distanceFromParent = sqrt(
