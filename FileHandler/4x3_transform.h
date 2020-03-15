@@ -81,8 +81,7 @@ struct real_matrix4x3
 		set_rotation(rotation);
 	}
 
-	real_matrix4x3(const real_quaternion& _rotation, const real_point3d& _translation) :
-		translation(_translation)
+	real_matrix4x3(const real_quaternion& _rotation, const real_point3d& _translation):translation(_translation)
 	{
 		set_rotation(_rotation);
 	}
@@ -100,8 +99,6 @@ struct real_matrix4x3
 
 		scale = 1.0f / scale;
 
-		inverse_rotation();
-
 		float inverse_pos_x = -translation.x * scale;
 		float inverse_pos_y = -translation.y * scale;
 		float inverse_pos_z = -translation.z * scale;
@@ -109,6 +106,8 @@ struct real_matrix4x3
 		translation.x = (inverse_pos_x * forward.i) + (inverse_pos_y * left.i) + (inverse_pos_z * up.i);
 		translation.y = (inverse_pos_x * forward.j) + (inverse_pos_y * left.j) + (inverse_pos_z * up.j);
 		translation.z = (inverse_pos_x * forward.k) + (inverse_pos_y * left.k) + (inverse_pos_z * up.k);
+
+		inverse_rotation();
 	};
 
 	void set_rotation(const real_quaternion& rotation)
