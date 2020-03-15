@@ -115,6 +115,13 @@ struct real_quaternion
 };
 struct real_matrix4x3
 {
+	/*
+	----current element ordering
+	[Fi Fj Fk Px
+	Li Lj Lk Py
+	Ui Uj Uk Pz
+	0  0  0  1]	
+	*/
 	float scale = 1.0f;
 	real_vector3d forward;
 	real_vector3d left;
@@ -184,9 +191,9 @@ struct real_matrix4x3
 	}
 	void transform_vector(real_point3d vec)
 	{
-		vec.x = vec.x * forward.i + vec.y * left.i + vec.z * up.i + translation.x;
-		vec.y = vec.x * forward.j + vec.y * left.j + vec.z * up.j + translation.y;
-		vec.z = vec.x * forward.k + vec.y * left.k + vec.z * up.k + translation.z;
+		vec.x = vec.x * forward.i + vec.y * forward.j + vec.z * forward.k + translation.x;
+		vec.y = vec.x * left.i + vec.y * left.j + vec.z *left .k + translation.y;
+		vec.z = vec.x * up.i + vec.y * up.j + vec.z * up.k + translation.z;
 	}
 	//a*b multiplication operation
 	static void multiply(real_matrix4x3& out, const real_matrix4x3& a, const real_matrix4x3& b)
@@ -235,9 +242,9 @@ struct real_matrix4x3
 		out.up.j = u1i*f2j + u1j*l2j + u1k*u2j;
 		out.up.k = u1i*f2k + u1j*l2k + u1k*u2k;
 
-		out.translation.x = p1x*f2i + p1y*l2i + p1z*u2i + 1 * p2x;
-		out.translation.y = p1x*f2j + p1y*l2j + p1z*u2j + 1 * p2y;
-		out.translation.z = p1x*f2k + p1y*l2k + p1z*u2k + 1 * p2z;
+		out.translation.x = f1i*p2x + f1j*p2y + f1k*p2z + p1x;
+		out.translation.y = l1i*p2x + l1j*p2y + l1k*p2z + p1y;
+		out.translation.z = u1i*p2x + u1j*p2y + u1k*p2z + p1z;
 	}
 	void decompose_matrix(real_point3d& pos_out,real_quaternion& rot_out)
 	{
