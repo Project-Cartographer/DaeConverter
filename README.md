@@ -10,6 +10,11 @@ A command line based app to import and extract Halo 2 Render Model tags
   * Example :  DaeConverter.exe -compile BR
   * Note : The [<Model_Directory>](#model_directory) must be organised properly
   
+#### Compiling JMS files ####
+  * Use "-compileJMS <model_Directory>"
+  * Example : DaeConverter.exe -compile BR
+  * Note : jms 8200 would be treated similary to 8210 in terms of material declarations,therfore it is mandatory to define  			   LOD/permutations/regions in material section as it is done in 8210
+  
 #### Decompiling Render Model ####
   * Use "-decompile <render_model file>"
   * Example :  DaeConverter.exe -decompile BR\BR.render_model
@@ -41,6 +46,8 @@ A command line based app to import and extract Halo 2 Render Model tags
 * __Incomplete__
 	* collada dumping function
 	* collada loading function(its in alpha stage,therefore not error free)  
+	* calculation of vertex binormals,tangents(for proper lightning)
+	* Traingle Strip optimization(for custom skies)
   
 ## Contributing ##
 Contributions are welcome, MSVC 2015 is currently used to build the app, and is therefore the recommended IDE.
