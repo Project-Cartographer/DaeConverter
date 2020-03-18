@@ -21,6 +21,9 @@ namespace jms
 			float y;
 			float z;
 
+			vector3D() {
+				x = y = z = 0.0f;
+			}
 			//read from ifstream(text interface)
 			void read(std::ifstream* jms_stream, int version);
 			//write to ofstream(text stream)
@@ -33,6 +36,9 @@ namespace jms
 			float z;
 			float w;
 
+			vector4D() {
+				x = y = z = w = 0.0f;
+			}
 			//read from ifstream(text interface)
 			void read(std::ifstream* jms_stream, int version);
 			//write to ofstream(text interface)
@@ -48,6 +54,12 @@ namespace jms
 			vector4D rotation;
 			vector3D position;
 
+			node() {
+				name = "";
+				parent_node_index = first_child_node_index = sibling_node_index = -1;
+				rotation = vector4D();
+				position = vector3D();
+			}
 			//read from ifstream(text interface)
 			void read(std::ifstream* jms_stream,int version);
 			//write to ofstream(text interface)
@@ -61,6 +73,9 @@ namespace jms
 			std::string Permutation;
 			std::string Region;
 
+			material() {
+				name = tif_path = LOD = Permutation = Region = "";
+			}
 			//read from ifstream(text interface)
 			void read(std::ifstream* jms_stream,int version);
 			//write to ofstream(text interface)
@@ -75,6 +90,12 @@ namespace jms
 			vector3D position;
 			float radius;
 
+			marker(){
+				name = "";
+				region = parent_node = -1;
+				rotation = vector4D();
+				position = vector3D();
+			}
 			//read from ifstream(text interface)
 			void read(std::ifstream* jms_stream,int version);
 			//write to ofstream(text interface)
@@ -84,6 +105,9 @@ namespace jms
 	{
 	public: std::string name;
 
+			region() {
+				name = "";
+			}
 			//read from ifstream(text interface)
 			void read(std::ifstream* jms_stream,int version);
 			//write to ofstream(text interface)
@@ -99,6 +123,9 @@ namespace jms
 		 std::vector<float> node_weights;
 		 vector3D tex_cords;//[u,v,w]=[x,y,z]
 
+		 vertex() {
+			 position = normal = tex_cords = vector3D();
+		 }
 		 //read from ifstream(text interface)
 		 void read(std::ifstream* jms_stream,int version);
 		 //write to ofstream(text interface)
@@ -110,6 +137,9 @@ namespace jms
 			int shader_index;
 			std::vector<int> vertex_indices;//3 vertex-lol
 
+			triangle() {
+				region_index = shader_index = -1;
+			}
 			//read from ifstream(text interface)
 			void read(std::ifstream* jms_stream, int version);
 			//write to ofstream(text interface)
@@ -125,6 +155,8 @@ namespace jms
 		void write_jms8200(std::ofstream* jms_stream);
 		///writes jms8210 into the specified stream,following the version number
 		void write_jms8210(std::ofstream* jms_stream);
+		///fixes parent node reference for jms8200
+		void fix_jms8200_parent_ref();
 	public:
 		//structure implemented for version 8200 and 8210,cause i am only aware of that
 		int version;

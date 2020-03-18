@@ -1278,22 +1278,23 @@ void mode::Load_bone(std::string name, const aiScene* my_scene)
 	t_mat->Inverse();//turning it into an inverse
 
 	//i dont know why h2 saves inverses in this manner(maybe just to mislead modders)<4x4 or 4x3 whatever><IDC>
-	t_node.inverseForward.x = 1;
-	t_node.inverseForward.y = t_mat->a1;
-	t_node.inverseForward.z = t_mat->b1;
+	t_node.inverseScale = 1.0f;
 
-	t_node.inverseLeft.x = t_mat->c1;
-	t_node.inverseLeft.y = t_mat->a2;
-	t_node.inverseLeft.z = t_mat->b2;
+	t_node.inverseForward.x = t_mat->a1;
+	t_node.inverseForward.y = t_mat->a2;
+	t_node.inverseForward.z = t_mat->a3;
 
-	t_node.inverseUp.x = t_mat->c2;
-	t_node.inverseUp.y = t_mat->a3;
-	t_node.inverseUp.z = t_mat->b3;
+	t_node.inverseLeft.x = t_mat->b1;
+	t_node.inverseLeft.y = t_mat->b2;
+	t_node.inverseLeft.z = t_mat->b3;
 
-	t_node.inversePosition.x = t_mat->c3;
-	t_node.inversePosition.y = t_mat->a4 / 100;
-	t_node.inversePosition.z = t_mat->b4 / 100;
-	t_node.inverseScale = t_mat->c4 / 100;
+	t_node.inverseUp.x = t_mat->c1;
+	t_node.inverseUp.y = t_mat->c2;
+	t_node.inverseUp.z = t_mat->c3;
+
+	t_node.inversePosition.x = t_mat->a4 / 100;
+	t_node.inversePosition.y = t_mat->b4 / 100;
+	t_node.inversePosition.z = t_mat->c4 / 100;	
 
 	nodes_list.push_back(t_node);
 }
@@ -1355,7 +1356,7 @@ int mode::_get_section_index(const jms::material& mat_def)
 		if (mat_def.Region.compare(t_region_ref.name) == 0)
 		{			
 			int j = 0;
-			while(1)
+			while (1)
 			{
 				if (j == t_region_ref.perms.size())
 				{
@@ -1425,12 +1426,12 @@ int mode::_get_section_index(const jms::material& mat_def)
 							section_data_list.push_back(t_section);
 							t_perm_ref.L6 = (short)ret;
 						}
-						break;						
+						break;
 					}
 					return ret;
 				}
-			}
-			j++;
+				j++;
+			}			
 		}
 		i++;
 	}
@@ -1561,7 +1562,7 @@ void mode::Load_bones(jms::jms* my_file)
 		{
 			t_intJMS_parent = node_base._get_child_node_by_name(my_file->node_list[t_JMS_node.parent_node_index].name);
 			if (t_intJMS_parent == nullptr)
-				throw new exception("Incorrect sequence of nodes");
+				throw new exception("Incorrect sequence of nodes,Parent node should come first");
 		}
 		else
 			t_intJMS_parent = &node_base;

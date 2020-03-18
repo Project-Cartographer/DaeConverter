@@ -133,9 +133,9 @@ namespace jms
 		switch (version)
 		{
 		case 8200:
-			_parse_next(jms_stream, name);
-			_parse_next(jms_stream, tif_path);
-			break;
+			//_parse_next(jms_stream, name);
+			//_parse_next(jms_stream, tif_path);
+			//break;
 		case 8210:
 			_parse_next(jms_stream, name);
 			_parse_next(jms_stream, LOD);
@@ -366,6 +366,7 @@ namespace jms
 			{
 			case 8200:
 				read_jms8200(jms_stream);
+				fix_jms8200_parent_ref();
 				break;
 			case 8210:
 				read_jms8210(jms_stream);
@@ -411,42 +412,42 @@ namespace jms
 		_parse_next(jms_stream, n);//node count
 		while (n--)
 		{
-			node t_node;
+			node t_node = node();
 			t_node.read(jms_stream, version);
 			node_list.push_back(t_node);
 		}
 		_parse_next(jms_stream, n);//material count
 		while (n--)
 		{
-			material t_mat;
+			material t_mat = material();
 			t_mat.read(jms_stream, version);
 			material_list.push_back(t_mat);
 		}
 		_parse_next(jms_stream, n);//marker count
 		while (n--)
 		{
-			marker t_mark;
+			marker t_mark = marker();
 			t_mark.read(jms_stream, version);
 			marker_list.push_back(t_mark);
 		}
 		_parse_next(jms_stream, n);//region count
 		while (n--)
 		{
-			region t_reg;
+			region t_reg = region();
 			t_reg.read(jms_stream, version);
 			region_list.push_back(t_reg);
 		}
 		_parse_next(jms_stream, n);//vertex count
 		while (n--)
 		{
-			vertex t_vertex;
+			vertex t_vertex = vertex();
 			t_vertex.read(jms_stream, version);
 			vertex_list.push_back(t_vertex);
 		}
 		_parse_next(jms_stream, n);//triangle list
 		while (n--)
 		{
-			triangle t_tri;
+			triangle t_tri = triangle();
 			t_tri.read(jms_stream, version);
 			triangle_list.push_back(t_tri);
 		}
@@ -457,21 +458,21 @@ namespace jms
 		_parse_next(jms_stream, n);//node count
 		while (n--)
 		{
-			node t_node;
+			node t_node = node();
 			t_node.read(jms_stream, version);
 			node_list.push_back(t_node);
 		}
 		_parse_next(jms_stream, n);//material count
 		while (n--)
 		{
-			material t_mat;
+			material t_mat = material();
 			t_mat.read(jms_stream, version);
 			material_list.push_back(t_mat);
 		}
 		_parse_next(jms_stream, n);//marker count
 		while (n--)
 		{
-			marker t_mark;
+			marker t_mark = marker();
 			t_mark.read(jms_stream, version);
 			marker_list.push_back(t_mark);
 		}
@@ -490,14 +491,14 @@ namespace jms
 		_parse_next(jms_stream, n);//vertex count
 		while (n--)
 		{
-			vertex t_vertex;
+			vertex t_vertex = vertex();
 			t_vertex.read(jms_stream, version);
 			vertex_list.push_back(t_vertex);
 		}
 		_parse_next(jms_stream, n);//triangle list
 		while (n--)
 		{
-			triangle t_tri;
+			triangle t_tri = triangle();
 			t_tri.read(jms_stream, version);
 			triangle_list.push_back(t_tri);
 		}
@@ -548,5 +549,30 @@ namespace jms
 	}
 	jms::~jms()
 	{
+	}
+	void jms::fix_jms8200_parent_ref()
+	{
+		//To streamline the line subsequent conversion processes
+		///jms 8200 doesnt mention parent node index
+		///rather it mentions child node and sibilling indices
+		///the subsquent conversion processes utilize parent index for referencing nodes
+		for (int i = 0; i < node_list.size(); i++)
+		{
+			node& current_node = node_list[i];
+
+			///update the parent index of sibillings
+			if (current_node.parent_node_index != -1)
+			{
+				int sibbiling_node_index = current_node.sibling_node_index;
+				while (sibbiling_node_index != -1)
+				{
+					node_list[sibbiling_node_index].parent_node_index = current_node.parent_node_index;
+					sibbiling_node_index = node_list[sibbiling_node_index].sibling_node_index;
+				}
+			}
+			///child node
+			if (current_node.first_child_node_index != -1)
+				node_list[current_node.first_child_node_index].parent_node_index = i;
+		}
 	}
 }
