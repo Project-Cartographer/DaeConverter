@@ -42,11 +42,10 @@ A command line based app to import and extract Halo 2 Render Model tags
   * Supports multiple Permutations and multiple models
   * Supports Nodes
   * Supports Node copying
-
+  * Calculation of vertex binormals,tangents(for proper lightning)	
 * __Incomplete__
 	* collada dumping function
-	* collada loading function(its in alpha stage,therefore not error free)  
-	* calculation of vertex binormals,tangents(for proper lightning)
+	* collada loading function(its in alpha stage,therefore not error free)  	
 	* Traingle Strip optimization(for custom skies)
   
 ## Contributing ##
