@@ -1544,6 +1544,9 @@ mode::mode(render_model_import::jms_model_import& my_import)
 		}
 		delete my_file;
 	}
+	///call tangent and binormal generating function
+	for (int i = 0; i < section_data_list.size(); i++)
+		section_data_list[i]._calculate_vertex_tangent_and_binormal();
 }
 void mode::Load_bones(jms::jms* my_file)
 {
@@ -1727,4 +1730,84 @@ permutations::permutations()
 regions::regions()
 {
 	name = "";
+}
+void section_data::_calculate_vertex_tangent_and_binormal()
+{
+	vector<vector3d> tangent_list;
+	vector<vector3d> binormal_list;
+	vector<int> count_list;
+
+	tangent_list.resize(vertex_list.size(), { 0,0,0 });
+	binormal_list.resize(vertex_list.size(), { 0,0,0 });
+	count_list.resize(vertex_list.size(), 0);
+
+	for (int parts_iter = 0; parts_iter < parts_list.size(); parts_iter++)
+	{
+		parts& t_part = parts_list[parts_iter];
+		
+		for (int tria_iter = 0; tria_iter < t_part.face_list.size(); tria_iter++)
+		{
+			triangle_face& t_face = t_part.face_list[tria_iter];
+
+			auto v0 = vertex_list[t_face.v0];
+			auto v1 = vertex_list[t_face.v1];
+			auto v2 = vertex_list[t_face.v2];
+
+			auto x0 = v1.pos.x - v0.pos.x;
+			auto x1 = v2.pos.x - v0.pos.x;
+			auto y0 = v1.pos.y - v0.pos.y;
+			auto y1 = v2.pos.y - v0.pos.y;
+			auto z0 = v1.pos.z - v0.pos.z;
+			auto z1 = v2.pos.z - v0.pos.z;
+
+			auto s0 = v1.tex_cord.x - v0.tex_cord.x;
+			auto s1 = v2.tex_cord.x - v0.tex_cord.x;
+			auto t0 = v1.tex_cord.y - v0.tex_cord.y;
+			auto t1 = v2.tex_cord.y - v0.tex_cord.y;
+
+			auto r = s0 * t1 - s1 * t0;
+			if (r == 0)
+				continue;
+
+			r = 1 / r;
+
+			auto bi = -(s0 * x1 - s1 * x0) * r;
+			auto bj = -(s0 * y1 - s1 * y0) * r;
+			auto bk = -(s0 * z1 - s1 * z0) * r;
+			auto b_len = sqrt(bi*bi + bj*bj + bk*bj);
+
+			auto ti = (t1 * x0 - t0 * x1) * r;
+			auto tj = (t1 * y0 - t0 * y1) * r;
+			auto tk = (t1 * z0 - t0 * z1) * r;
+			auto t_len = sqrt(ti*ti + tj*tj + tk*tk);
+
+			vector3d binormal = { bi,bj,bk };
+			vector3d tangent = { ti,tj,tk };
+
+			binormal = binormal*(1 / b_len);
+			tangent = tangent*(1 / t_len);
+
+			binormal_list[t_face.v0] = binormal_list[t_face.v0] + binormal;
+			tangent_list[t_face.v0] = tangent_list[t_face.v0] + tangent;
+			count_list[t_face.v0]++;
+
+			binormal_list[t_face.v1] = binormal_list[t_face.v1] + binormal;
+			tangent_list[t_face.v1] = tangent_list[t_face.v1] + tangent;
+			count_list[t_face.v1]++;
+
+			binormal_list[t_face.v2] = binormal_list[t_face.v2] + binormal;
+			tangent_list[t_face.v2] = tangent_list[t_face.v2] + tangent;
+			count_list[t_face.v2]++;
+		}
+	}
+	for (int i = 0; i < vertex_list.size(); i++)
+	{
+		if (count_list[i] != 0)
+		{
+			vertex_list[i].binormal = binormal_list[i] * (1 / count_list[i]);
+			vertex_list[i].binormal.normalize();
+			vertex_list[i].tangent = tangent_list[i] * (1 / count_list[i]);
+			vertex_list[i].tangent.normalize();
+		}
+	}
 }

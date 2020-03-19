@@ -2,6 +2,7 @@
 /*
 -Completed the loading part of the render_model 21/2/18,a bit broken
 -Completed render_model dumping function at 04/04/18
+-Tangent and Normal generation logic taken from https://github.com/Sigmmma/reclaimer/blob/d7433f6e93a71bbbfd3c214cc10e38e5af322c25/reclaimer/model/jms/model.py#L65 at 19/03/20
 
 -Incomplete
 	-collada dumping function
@@ -56,6 +57,29 @@ struct vector3d
 	float x;
 	float y;
 	float z;
+
+	vector3d& operator+(const vector3d other)
+	{
+		x = x + other.x;
+		y = y + other.y;
+		z = z + other.z;
+		return *this;
+	}
+	vector3d& operator*(const float scalar)
+	{
+		x = x*scalar;
+		y = y*scalar;
+		z = z*scalar;
+
+		return *this;
+	}
+	void normalize()
+	{
+		float len = sqrt(x*x + y*y + z*z);
+		x = x / len;
+		y = y / len;
+		z = x / len;
+	}
 };
 struct quaternion
 {
@@ -179,6 +203,7 @@ public :
 	vector<node_map> node_map_list;
 
 	void Generate_Faces(bool);
+	void _calculate_vertex_tangent_and_binormal();
 	int _get_node_map_by_node_name(std::string bone_name, const vector<nodes> &nodes_list);
 private:
 	void Load_mesh_recursive(aiNode* node, const aiScene* my_scene, const vector<nodes> &nodes_list);//utilised during dae loading	
