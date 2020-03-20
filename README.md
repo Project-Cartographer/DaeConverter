@@ -12,7 +12,7 @@ A command line based app to import and extract Halo 2 Render Model tags
   
 #### Compiling JMS files ####
   * Use "-compileJMS <model_Directory>"
-  * Example : DaeConverter.exe -compile BR
+  * Example : DaeConverter.exe -compileJMS testjms
   * Note : jms 8200 would be treated similary to 8210 in terms of material declarations,therfore it is mandatory to define  			   LOD/permutations/regions in material section as it is done in 8210
   
 #### Decompiling Render Model ####
