@@ -381,6 +381,8 @@ namespace jms
 			std::cout << "\nFile doesnt exist : " << file_loc;
 		}
 
+		clean_redundant_vertices();
+
 		jms_stream->close();
 		delete jms_stream;
 	}
@@ -573,6 +575,74 @@ namespace jms
 			///child node
 			if (current_node.first_child_node_index != -1)
 				node_list[current_node.first_child_node_index].parent_node_index = i;
+		}
+	}
+	//function to remove similar/identical vertices
+	///Extra function to do some clean up
+	///which some lazy ass export plugin fail to do so
+	///resulting in declaration of 3 vertex per triangle
+	void jms::clean_redundant_vertices(float threshold)
+	{
+		///well the same vertex has got different normal depending on the face it is utilized and therefore has to averaged
+		std::vector<int> vertex_ref;
+		vertex_ref.resize(vertex_list.size(), 0);			///list to store references to newly added or matched up vertices
+
+		std::vector<vertex> new_vertex_list;				///new reduced vertex list
+		std::vector<int> vertex_ref_count;					///list to store no instance the vertex has been referred
+
+		for (int vertex_iter = 0; vertex_iter < vertex_list.size(); vertex_iter++)
+		{
+			vertex& current_vertex = vertex_list[vertex_iter];
+			///look for it
+			int match_index = -1, new_ver_iter = 0;
+			while (new_ver_iter < new_vertex_list.size())
+			{
+				vertex& comp_vertex = new_vertex_list[new_ver_iter];
+				if (abs(comp_vertex.position.x - current_vertex.position.x) < threshold)
+				{
+					if (abs(comp_vertex.position.y - current_vertex.position.y) < threshold)
+					{
+						if (abs(comp_vertex.position.z - current_vertex.position.z) < threshold)
+						{
+							///found our vertex
+							match_index = new_ver_iter;
+							break;
+						}
+					}
+				}
+				new_ver_iter++;
+			}
+			if (match_index == -1)
+			{
+				///no match,new vertex
+				match_index = new_vertex_list.size();
+				new_vertex_list.push_back(current_vertex);				///add the new vertex
+				vertex_ref_count.push_back(1);							///add a new entry to refs count(for averaging purpose)
+				vertex_ref[vertex_iter] = match_index;					///save the new reference for the vertex in the new list
+			}
+			else
+			{
+				///match found !!
+				vertex_ref_count[match_index]++;						///increase ref count
+				new_vertex_list[match_index].normal = new_vertex_list[match_index].normal + vertex_list[vertex_iter].normal;///for averaging purpose
+				vertex_ref[vertex_iter] = match_index;					///save the new reference for the duplicate vertex
+			}
+		}
+		///averaging normals;
+		for (int i = 0; i < new_vertex_list.size(); i++)
+			new_vertex_list[i].normal = new_vertex_list[i].normal*(1.0f / vertex_ref_count[i]);
+		///now assign our new vertex list
+		vertex_list.assign(new_vertex_list.begin(), new_vertex_list.end());
+		///now to fix the vertex reference present in the triangles
+		for (int tri_iter = 0; tri_iter < triangle_list.size(); tri_iter++)
+		{
+			int v0 = triangle_list[tri_iter].vertex_indices[0];
+			int v1 = triangle_list[tri_iter].vertex_indices[1];
+			int v2 = triangle_list[tri_iter].vertex_indices[2];
+
+			triangle_list[tri_iter].vertex_indices[0] = vertex_ref[v0];
+			triangle_list[tri_iter].vertex_indices[1] = vertex_ref[v1];
+			triangle_list[tri_iter].vertex_indices[2] = vertex_ref[v2];
 		}
 	}
 }

@@ -24,6 +24,24 @@ namespace jms
 			vector3D() {
 				x = y = z = 0.0f;
 			}
+			//addition operator
+			vector3D operator+(const vector3D& other)
+			{
+				x += other.x;
+				y += other.y;
+				z += other.z;
+
+				return *this;
+			}
+			//scalar multiplication
+			vector3D operator*(const float scalar)
+			{
+				x *= scalar;
+				y *= scalar;
+				z *= scalar;
+
+				return *this;
+			}
 			//read from ifstream(text interface)
 			void read(std::ifstream* jms_stream, int version);
 			//write to ofstream(text stream)
@@ -38,6 +56,26 @@ namespace jms
 
 			vector4D() {
 				x = y = z = w = 0.0f;
+			}
+			//addition operator
+			vector4D operator+(const vector4D& other)
+			{
+				x += other.x;
+				y += other.y;
+				z += other.z;
+				w += other.w;
+
+				return *this;
+			}
+			//scalar multiplication
+			vector4D operator*(int scalar)
+			{
+				x *= scalar;
+				y *= scalar;
+				z *= scalar;
+				w *= scalar;
+
+				return *this;
 			}
 			//read from ifstream(text interface)
 			void read(std::ifstream* jms_stream, int version);
@@ -157,6 +195,8 @@ namespace jms
 		void write_jms8210(std::ofstream* jms_stream);
 		///fixes parent node reference for jms8200
 		void fix_jms8200_parent_ref();
+		///removes copy of same vertices
+		void clean_redundant_vertices(float threshold = 0.001f);
 	public:
 		//structure implemented for version 8200 and 8210,cause i am only aware of that
 		int version;

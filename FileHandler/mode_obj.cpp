@@ -1769,12 +1769,12 @@ void section_data::_calculate_vertex_tangent_and_binormal()
 			if (r == 0)
 				continue;
 
-			r = 1 / r;
+			r = 1.0f / r;
 
 			auto bi = -(s0 * x1 - s1 * x0) * r;
 			auto bj = -(s0 * y1 - s1 * y0) * r;
 			auto bk = -(s0 * z1 - s1 * z0) * r;
-			auto b_len = sqrt(bi*bi + bj*bj + bk*bj);
+			auto b_len = sqrt(bi*bi + bj*bj + bk*bk);
 
 			auto ti = (t1 * x0 - t0 * x1) * r;
 			auto tj = (t1 * y0 - t0 * y1) * r;
@@ -1784,8 +1784,8 @@ void section_data::_calculate_vertex_tangent_and_binormal()
 			vector3d binormal = { bi,bj,bk };
 			vector3d tangent = { ti,tj,tk };
 
-			binormal = binormal*(1 / b_len);
-			tangent = tangent*(1 / t_len);
+			binormal = binormal*(1.0f / b_len);
+			tangent = tangent*(1.0f / t_len);
 
 			binormal_list[t_face.v0] = binormal_list[t_face.v0] + binormal;
 			tangent_list[t_face.v0] = tangent_list[t_face.v0] + tangent;
@@ -1804,9 +1804,9 @@ void section_data::_calculate_vertex_tangent_and_binormal()
 	{
 		if (count_list[i] != 0)
 		{
-			vertex_list[i].binormal = binormal_list[i] * (1 / count_list[i]);
+			vertex_list[i].binormal = binormal_list[i] * (1.0f / count_list[i]);
 			vertex_list[i].binormal.normalize();
-			vertex_list[i].tangent = tangent_list[i] * (1 / count_list[i]);
+			vertex_list[i].tangent = tangent_list[i] * (1.0f / count_list[i]);
 			vertex_list[i].tangent.normalize();
 		}
 	}
