@@ -203,7 +203,7 @@ public :
 	vector<node_map> node_map_list;
 
 	void Generate_Faces(bool);
-	void _calculate_vertex_tangent_and_binormal();
+	void Calculate_vertex_normal_tangent_and_binormal();
 	int _get_node_map_by_node_name(std::string bone_name, const vector<nodes> &nodes_list);
 private:
 	void Load_mesh_recursive(aiNode* node, const aiScene* my_scene, const vector<nodes> &nodes_list);//utilised during dae loading	

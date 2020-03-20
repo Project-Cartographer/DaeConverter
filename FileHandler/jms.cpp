@@ -588,49 +588,66 @@ namespace jms
 		vertex_ref.resize(vertex_list.size(), 0);			///list to store references to newly added or matched up vertices
 
 		std::vector<vertex> new_vertex_list;				///new reduced vertex list
-		std::vector<int> vertex_ref_count;					///list to store no instance the vertex has been referred
+		//std::vector<int> vertex_ref_count;					///list to store no instance the vertex has been referred
 
 		for (int vertex_iter = 0; vertex_iter < vertex_list.size(); vertex_iter++)
 		{
 			vertex& current_vertex = vertex_list[vertex_iter];
 			///look for it
-			int match_index = -1, new_ver_iter = 0;
-			while (new_ver_iter < new_vertex_list.size())
+			int match_index = -1;
+			for (int new_ver_iter = 0; new_ver_iter < new_vertex_list.size(); new_ver_iter++)
 			{
 				vertex& comp_vertex = new_vertex_list[new_ver_iter];
-				if (abs(comp_vertex.position.x - current_vertex.position.x) < threshold)
+
+				if (!((abs(comp_vertex.position.x - current_vertex.position.x) < threshold)
+					&& (abs(comp_vertex.position.y - current_vertex.position.y) < threshold)
+					&& (abs(comp_vertex.position.z - current_vertex.position.z) < threshold)))
+					continue;
+				if (!((abs(comp_vertex.normal.x - current_vertex.normal.x) < threshold)
+					&& (abs(comp_vertex.normal.y - current_vertex.normal.y) < threshold)
+					&& (abs(comp_vertex.normal.z - current_vertex.normal.z) < threshold)))
+					continue;
+				if (comp_vertex.node_indices.size() != current_vertex.node_indices.size())
+					continue;
+
+				bool skip = false;
+				for (int i = 0; i < current_vertex.node_indices.size(); i++)
 				{
-					if (abs(comp_vertex.position.y - current_vertex.position.y) < threshold)
+					if ((comp_vertex.node_indices[i] != current_vertex.node_indices[i])
+						|| (abs(comp_vertex.node_weights[i] - current_vertex.node_weights[i]) > threshold))
 					{
-						if (abs(comp_vertex.position.z - current_vertex.position.z) < threshold)
-						{
-							///found our vertex
-							match_index = new_ver_iter;
-							break;
-						}
+						skip = true;
+						break;
 					}
 				}
-				new_ver_iter++;
+				if (skip)
+					continue;
+				if (!(abs(comp_vertex.tex_cords.x - current_vertex.tex_cords.x) < threshold)
+					&& (abs(comp_vertex.tex_cords.y - current_vertex.tex_cords.y) < threshold))
+					continue;
+				///found our vertex
+				match_index = new_ver_iter;
+				break;
 			}
 			if (match_index == -1)
 			{
 				///no match,new vertex
 				match_index = new_vertex_list.size();
 				new_vertex_list.push_back(current_vertex);				///add the new vertex
-				vertex_ref_count.push_back(1);							///add a new entry to refs count(for averaging purpose)
+				//vertex_ref_count.push_back(1);							///add a new entry to refs count(for averaging purpose)
 				vertex_ref[vertex_iter] = match_index;					///save the new reference for the vertex in the new list
 			}
 			else
 			{
 				///match found !!
-				vertex_ref_count[match_index]++;						///increase ref count
-				new_vertex_list[match_index].normal = new_vertex_list[match_index].normal + vertex_list[vertex_iter].normal;///for averaging purpose
+				//vertex_ref_count[match_index]++;						///increase ref count
+				new_vertex_list[match_index].normal = new_vertex_list[match_index].normal + current_vertex.normal;///for averaging purpose
 				vertex_ref[vertex_iter] = match_index;					///save the new reference for the duplicate vertex
 			}
 		}
 		///averaging normals;
-		for (int i = 0; i < new_vertex_list.size(); i++)
-			new_vertex_list[i].normal = new_vertex_list[i].normal*(1.0f / vertex_ref_count[i]);
+		//for (int i = 0; i < new_vertex_list.size(); i++)
+			//new_vertex_list[i].normal = new_vertex_list[i].normal*(1.0f / vertex_ref_count[i]);
 		///now assign our new vertex list
 		vertex_list.assign(new_vertex_list.begin(), new_vertex_list.end());
 		///now to fix the vertex reference present in the triangles
