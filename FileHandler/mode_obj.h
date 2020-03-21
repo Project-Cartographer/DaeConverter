@@ -204,6 +204,8 @@ public :
 
 	void Generate_Faces(bool);
 	void Calculate_vertex_normal_tangent_and_binormal();
+	void Remove_redundant_vertices();
+	void Remove_redundant_vertices(vector<triangle_face>& face_list, vector<RAW_vertex>& vertex_list, int vertex_start_off = 0, float threshold = 0.001f);
 	int _get_node_map_by_node_name(std::string bone_name, const vector<nodes> &nodes_list);
 private:
 	void Load_mesh_recursive(aiNode* node, const aiScene* my_scene, const vector<nodes> &nodes_list);//utilised during dae loading	

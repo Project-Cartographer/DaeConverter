@@ -663,6 +663,7 @@ void mode::Dump_render_model(string file_loc)
 		//the tag base
 		char tag_base[0xB8] = { 0 };
 		//modifing the parameters
+		*(__int16*)&tag_base[0x4] = 0x4;//force node maps flag
 		*(int*)&tag_base[0x24] = region_list.size();
 		*(int*)&tag_base[0x30] = section_data_list.size();
 		*(int*)&tag_base[0x60] = nodes_list.size();
@@ -685,6 +686,7 @@ void mode::Dump_render_model(string file_loc)
 		{
 			char regions[0x14] = { 0 };
 			regions[0x3] = region_list[i].name.length();
+			*(__int16*)&regions[0x4] = -1;//old node map offset
 			*(int*)&regions[0x8] = region_list[i].perms.size();
 			fout.write(regions, 0x14);
 		}
@@ -731,6 +733,7 @@ void mode::Dump_render_model(string file_loc)
 		{
 			char section[0x68] = { 0 };
 			*(__int16*)section = 2;//geo classification rigid boned
+			*(__int16*)&section[0x18] = 2;//geo classification again
 			*(int*)&section[0x34] = 1;
 			fout.write((char*)section, 0x68);
 		}
@@ -1274,27 +1277,21 @@ void mode::Load_bone(std::string name, const aiScene* my_scene)
 		aiMultiplyMatrix4(t_mat, &t_parent->mTransformation);
 		t_parent = t_parent->mParent;
 	}
+	///inverse position calculated by Assimp is incorrect
+	///therfore i calculate it using real_4x3 struct
+	real_matrix4x3 inv_transform = real_matrix4x3();
+	inv_transform.forward = { t_mat->a1,t_mat->a2,t_mat->a3 };
+	inv_transform.left = { t_mat->b1,t_mat->b2,t_mat->b3 };
+	inv_transform.up = { t_mat->c1,t_mat->c2,t_mat->c3 };
+	inv_transform.translation = { t_mat->a4 / 100,t_mat->b4 / 100,t_mat->c4 / 100 };
+	inv_transform.inverse();	
 
-	t_mat->Inverse();//turning it into an inverse
-
-	//i dont know why h2 saves inverses in this manner(maybe just to mislead modders)<4x4 or 4x3 whatever><IDC>
 	t_node.inverseScale = 1.0f;
 
-	t_node.inverseForward.x = t_mat->a1;
-	t_node.inverseForward.y = t_mat->a2;
-	t_node.inverseForward.z = t_mat->a3;
-
-	t_node.inverseLeft.x = t_mat->b1;
-	t_node.inverseLeft.y = t_mat->b2;
-	t_node.inverseLeft.z = t_mat->b3;
-
-	t_node.inverseUp.x = t_mat->c1;
-	t_node.inverseUp.y = t_mat->c2;
-	t_node.inverseUp.z = t_mat->c3;
-
-	t_node.inversePosition.x = t_mat->a4 / 100;
-	t_node.inversePosition.y = t_mat->b4 / 100;
-	t_node.inversePosition.z = t_mat->c4 / 100;	
+	t_node.inverseForward = { inv_transform.forward.i,inv_transform.forward.j,inv_transform.forward.k };
+	t_node.inverseLeft = { inv_transform.left.i,inv_transform.left.j,inv_transform.left.k };
+	t_node.inverseUp = { inv_transform.up.i,inv_transform.up.j,inv_transform.up.k };
+	t_node.inversePosition = { inv_transform.translation.x,inv_transform.translation.y,inv_transform.translation.z };
 
 	nodes_list.push_back(t_node);
 }
@@ -1544,9 +1541,13 @@ mode::mode(render_model_import::jms_model_import& my_import)
 		}
 		delete my_file;
 	}
+	///clean redundant vertices
 	///call tangent and binormal generating function
 	for (int i = 0; i < section_data_list.size(); i++)
+	{
+		//section_data_list[i].Remove_redundant_vertices();
 		section_data_list[i].Calculate_vertex_normal_tangent_and_binormal();
+	}
 }
 void mode::Load_bones(jms::jms* my_file)
 {
@@ -1733,12 +1734,12 @@ regions::regions()
 }
 void section_data::Calculate_vertex_normal_tangent_and_binormal()
 {
-	vector<vector3d> normal_list;
+	///vector<vector3d> normal_list;
 	vector<vector3d> tangent_list;
 	vector<vector3d> binormal_list;
 	vector<int> count_list;
 
-	normal_list.resize(vertex_list.size(), { 0,0,0 });
+	///normal_list.resize(vertex_list.size(), { 0,0,0 });
 	tangent_list.resize(vertex_list.size(), { 0,0,0 });
 	binormal_list.resize(vertex_list.size(), { 0,0,0 });
 	count_list.resize(vertex_list.size(), 0);
@@ -1788,25 +1789,25 @@ void section_data::Calculate_vertex_normal_tangent_and_binormal()
 			auto tk = (t1 * z0 - t0 * z1) * r;
 			auto t_len = sqrt(ti*ti + tj*tj + tk*tk);
 
-			vector3d normal = { ni,nj,nk };
+			///vector3d normal = { ni,nj,nk };
 			vector3d binormal = { bi,bj,bk };
 			vector3d tangent = { ti,tj,tk };
 
-			normal = normal*(1.0f / n_len);
+			///normal = normal*(1.0f / n_len);
 			binormal = binormal*(1.0f / b_len);
 			tangent = tangent*(1.0f / t_len);
 
-			normal_list[t_face.v0] = normal_list[t_face.v0] + normal;
+			///normal_list[t_face.v0] = normal_list[t_face.v0] + normal;
 			binormal_list[t_face.v0] = binormal_list[t_face.v0] + binormal;
 			tangent_list[t_face.v0] = tangent_list[t_face.v0] + tangent;
 			count_list[t_face.v0]++;
 
-			normal_list[t_face.v1] = normal_list[t_face.v1] + normal;
+			///normal_list[t_face.v1] = normal_list[t_face.v1] + normal;
 			binormal_list[t_face.v1] = binormal_list[t_face.v1] + binormal;
 			tangent_list[t_face.v1] = tangent_list[t_face.v1] + tangent;
 			count_list[t_face.v1]++;
 
-			normal_list[t_face.v2] = normal_list[t_face.v2] + normal;
+			///normal_list[t_face.v2] = normal_list[t_face.v2] + normal;
 			binormal_list[t_face.v2] = binormal_list[t_face.v2] + binormal;
 			tangent_list[t_face.v2] = tangent_list[t_face.v2] + tangent;
 			count_list[t_face.v2]++;
@@ -1816,12 +1817,126 @@ void section_data::Calculate_vertex_normal_tangent_and_binormal()
 	{
 		if (count_list[i] != 0)
 		{
-			vertex_list[i].normal = normal_list[i] * (1.0f / count_list[i]);
-			vertex_list[i].normal.normalize();
+			///vertex_list[i].normal = normal_list[i] * (1.0f / count_list[i]);
+			///vertex_list[i].normal.normalize();
 			vertex_list[i].binormal = binormal_list[i] * (1.0f / count_list[i]);
 			vertex_list[i].binormal.normalize();
 			vertex_list[i].tangent = tangent_list[i] * (1.0f / count_list[i]);
 			vertex_list[i].tangent.normalize();
 		}
+	}
+}
+//Does a part/material based redundant vertex removal
+void section_data::Remove_redundant_vertices()
+{
+	std::vector<RAW_vertex> new_vertex_list;				///new reduced vertex list that has to be added into section_data
+
+	for (int parts_iter = 0; parts_iter < parts_list.size(); parts_iter++)
+	{
+		parts& current_part = parts_list[parts_iter];
+		std::vector<RAW_vertex> current_part_vertex_list;	///vertex list pertaining to a part
+		///retrieve vertices to be processed,generates 3 vertex per triangle
+		for (int tri_iter = 0; tri_iter < current_part.face_list.size(); tri_iter++)
+		{
+			triangle_face& current_face = current_part.face_list[tri_iter];
+
+			int temp = current_part_vertex_list.size();
+
+			current_part_vertex_list.push_back(vertex_list[current_face.v0]);
+			current_part_vertex_list.push_back(vertex_list[current_face.v1]);
+			current_part_vertex_list.push_back(vertex_list[current_face.v2]);
+
+			current_face.v0 = temp;
+			current_face.v1 = temp + 1;
+			current_face.v2 = temp + 2;
+		}
+		///call the actual cleaner function
+		Remove_redundant_vertices(current_part.face_list, current_part_vertex_list, new_vertex_list.size(),1e-10);
+		///add the reduced vertex list to the new section_data list
+		new_vertex_list.insert(new_vertex_list.end(), current_part_vertex_list.begin(), current_part_vertex_list.end());
+	}
+	///assign to the section_data vertex list
+	vertex_list.assign(new_vertex_list.begin(), new_vertex_list.end());
+}
+///actual clean up program
+void section_data::Remove_redundant_vertices(vector<triangle_face>& face_list, vector<RAW_vertex>& vertex_list, int vertex_start_off, float threshold)
+{
+	std::vector<int> vertex_ref;
+	vertex_ref.resize(vertex_list.size(), 0);			///list to store references to newly added or matched up vertices
+
+	std::vector<RAW_vertex> new_vertex_list;			///new reduced vertex list based on per part analysis
+	///well the same vertex has got different normal depending on the face it is utilized and therefore has to averaged
+	std::vector<int> vertex_ref_count;					///list to store no instance the vertex has been referred
+
+	for (int vertex_iter = 0; vertex_iter < vertex_list.size(); vertex_iter++)
+	{
+		RAW_vertex& current_vertex = vertex_list[vertex_iter];
+		///look for it
+		int match_index = -1;
+		for (int new_ver_iter = 0; new_ver_iter < new_vertex_list.size(); new_ver_iter++)
+		{
+			RAW_vertex& comp_vertex = new_vertex_list[new_ver_iter];
+
+			if (!((abs(comp_vertex.pos.x - current_vertex.pos.x) <= threshold)
+				&& (abs(comp_vertex.pos.y - current_vertex.pos.y) <= threshold)
+				&& (abs(comp_vertex.pos.z - current_vertex.pos.z) <= threshold)))
+				continue;
+
+			bool skip = false;
+			for (int i = 0; i < 4; i++)
+			{
+				if (comp_vertex.nodes[i].index != current_vertex.nodes[i].index)	
+				{
+					skip = true;
+					break;
+				}
+				if(abs(comp_vertex.nodes[i].weight - current_vertex.nodes[i].weight) >= threshold)
+				{
+					skip = true;
+					break;
+				}
+			}
+			if (skip)
+				continue;
+			if (abs(comp_vertex.tex_cord.x - current_vertex.tex_cord.x) != 0.0f
+				&& abs(comp_vertex.tex_cord.y - current_vertex.tex_cord.y) != 0.0f)
+				continue;
+			///found our vertex
+			match_index = new_ver_iter;
+			break;
+		}
+		if (match_index == -1)
+		{
+			///no match,new vertex
+			match_index = new_vertex_list.size();
+			vertex_ref_count.push_back(1);							///add a new entry to refs count(for averaging purpose)
+			new_vertex_list.push_back(current_vertex);				///add the new vertex
+			vertex_ref[vertex_iter] = match_index;					///save the new reference for the vertex in the new list
+		}
+		else
+		{
+			///match found !!
+			vertex_ref_count[match_index]++;						///increase ref count
+			new_vertex_list[match_index].normal = new_vertex_list[match_index].normal + current_vertex.normal;///for averaging purpose
+			vertex_ref[vertex_iter] = match_index;					///save the new reference for the duplicate vertex
+		}
+	}
+	///averaging normals
+	for (int i = 0; i < new_vertex_list.size(); i++)
+		new_vertex_list[i].normal = new_vertex_list[i].normal*(1.0f / vertex_ref_count[i]);
+	///now assign our new vertex list
+	vertex_list.assign(new_vertex_list.begin(), new_vertex_list.end());
+	///now to fix the vertex reference present in the triangles
+	for (int tri_iter = 0; tri_iter < face_list.size(); tri_iter++)
+	{
+		triangle_face& current_face = face_list[tri_iter];
+
+		int v0 = current_face.v0;
+		int v1 = current_face.v1;
+		int v2 = current_face.v2;
+
+		current_face.v0 = vertex_start_off + vertex_ref[v0];
+		current_face.v1 = vertex_start_off + vertex_ref[v1];
+		current_face.v2 = vertex_start_off + vertex_ref[v2];
 	}
 }
