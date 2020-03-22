@@ -260,13 +260,17 @@ mode::mode(tag_data_struct& arg0)
 	dfbt_list* my_dfbt_list = List_block_headers(mode_data, mode_size);
 	dfbt* mode_header = Get_dfbt_from_size(my_dfbt_list, 0xB8, mem_start);
 
-	mem_start = (char*)mode_header;
+	dfbt* regions_header = Get_dfbt_from_size(my_dfbt_list, 0x14, mem_start);
 
+	//read name
+	char* mode_header_mem = (char*)mode_header + 0x10;
+	__int8 name_length = *(__int8*)(mode_header_mem + 0x3);
+
+	mem_start = (char*)mode_header;
+	name = Get_string((char*)regions_header - name_length, name_length);
 	///
 	//-----------------------------LOADING REGIONS AND PERMUTATIONS---------------------------------------------
 	///
-
-	dfbt* regions_header = Get_dfbt_from_size(my_dfbt_list, 0x14, mem_start);
 	
 	mem_start = (char*)regions_header;
 
@@ -663,6 +667,7 @@ void mode::Dump_render_model(string file_loc)
 		//the tag base
 		char tag_base[0xB8] = { 0 };
 		//modifing the parameters
+		*(__int8*)&tag_base[0x3] = name.length();
 		*(__int16*)&tag_base[0x4] = 0x4;//force node maps flag
 		*(int*)&tag_base[0x24] = region_list.size();
 		*(int*)&tag_base[0x30] = section_data_list.size();
@@ -671,6 +676,8 @@ void mode::Dump_render_model(string file_loc)
 		*(int*)&tag_base[0x84] = material_list.size();
 
 		fout.write(tag_base, 0xB8);			
+		//write the model name
+		fout.write(name.c_str(), name.length());
 
 		if (region_list.size())
 		{
@@ -1253,12 +1260,12 @@ void mode::Load_bone(std::string name, const aiScene* my_scene)
 	t_node.nextSiblingNode = -1;
 	t_node.importNodeIndex = nodes_list.size();
 
-	aiMatrix4x4* t_mat = new aiMatrix4x4(current_node->mTransformation);
+	aiMatrix4x4 t_mat = current_node->mTransformation;
 
 	aiVector3D t_ainode_pos;
 	aiQuaternion t_ainode_rot;
 
-	t_mat->DecomposeNoScaling(t_ainode_rot, t_ainode_pos);
+	t_mat.DecomposeNoScaling(t_ainode_rot, t_ainode_pos);
 
 	t_node.defaultTranslation.x = t_ainode_pos.x / 100;
 	t_node.defaultTranslation.y = t_ainode_pos.y / 100;
@@ -1274,26 +1281,24 @@ void mode::Load_bone(std::string name, const aiScene* my_scene)
 	aiNode* t_parent = current_node->mParent;
 	while (t_parent != my_scene->mRootNode)
 	{
-		aiMultiplyMatrix4(t_mat, &t_parent->mTransformation);
+		//corrected multiplication operation to P*T
+		aiMatrix4x4 P_mat = t_parent->mTransformation;
+		aiMultiplyMatrix4(&P_mat, &t_mat);
+		t_mat = P_mat;
+
 		t_parent = t_parent->mParent;
 	}
-	///inverse position calculated by Assimp is incorrect
-	///therfore i calculate it using real_4x3 struct
-	real_matrix4x3 inv_transform = real_matrix4x3();
-	inv_transform.forward = { t_mat->a1,t_mat->a2,t_mat->a3 };
-	inv_transform.left = { t_mat->b1,t_mat->b2,t_mat->b3 };
-	inv_transform.up = { t_mat->c1,t_mat->c2,t_mat->c3 };
-	inv_transform.translation = { t_mat->a4 / 100,t_mat->b4 / 100,t_mat->c4 / 100 };
-	inv_transform.inverse();	
+	t_mat.Inverse();	
 
 	t_node.inverseScale = 1.0f;
 
-	t_node.inverseForward = { inv_transform.forward.i,inv_transform.forward.j,inv_transform.forward.k };
-	t_node.inverseLeft = { inv_transform.left.i,inv_transform.left.j,inv_transform.left.k };
-	t_node.inverseUp = { inv_transform.up.i,inv_transform.up.j,inv_transform.up.k };
-	t_node.inversePosition = { inv_transform.translation.x,inv_transform.translation.y,inv_transform.translation.z };
+	t_node.inverseForward = { t_mat.a1,t_mat.a2,t_mat.a3 };
+	t_node.inverseLeft = { t_mat.b1,t_mat.b2,t_mat.b3 };
+	t_node.inverseUp = { t_mat.c1,t_mat.c2,t_mat.c3 };
+	t_node.inversePosition = { t_mat.a4 / 100,t_mat.b4 / 100,t_mat.c4 / 100 };
 
 	nodes_list.push_back(t_node);
+	
 }
 //reverted to the original logic
 void mode::Link_bones(const aiScene* my_scene)
@@ -1851,7 +1856,7 @@ void section_data::Remove_redundant_vertices()
 			current_face.v2 = temp + 2;
 		}
 		///call the actual cleaner function
-		Remove_redundant_vertices(current_part.face_list, current_part_vertex_list, new_vertex_list.size(),1e-10);
+		Remove_redundant_vertices(current_part.face_list, current_part_vertex_list, new_vertex_list.size());
 		///add the reduced vertex list to the new section_data list
 		new_vertex_list.insert(new_vertex_list.end(), current_part_vertex_list.begin(), current_part_vertex_list.end());
 	}
@@ -1877,20 +1882,28 @@ void section_data::Remove_redundant_vertices(vector<triangle_face>& face_list, v
 		{
 			RAW_vertex& comp_vertex = new_vertex_list[new_ver_iter];
 
-			if (!((abs(comp_vertex.pos.x - current_vertex.pos.x) <= threshold)
-				&& (abs(comp_vertex.pos.y - current_vertex.pos.y) <= threshold)
-				&& (abs(comp_vertex.pos.z - current_vertex.pos.z) <= threshold)))
-				continue;
+			if (abs(comp_vertex.pos.x - current_vertex.pos.x) < threshold)
+			{
+				if (abs(comp_vertex.pos.y - current_vertex.pos.y) < threshold)
+				{
+					if (abs(comp_vertex.pos.z - current_vertex.pos.z) < threshold);
+					else continue;
+				}
+				else continue;
+			}
+			else continue;
 
 			bool skip = false;
 			for (int i = 0; i < 4; i++)
 			{
-				if (comp_vertex.nodes[i].index != current_vertex.nodes[i].index)	
+				if (comp_vertex.nodes[i].index == current_vertex.nodes[i].index);
+				else
 				{
 					skip = true;
 					break;
 				}
-				if(abs(comp_vertex.nodes[i].weight - current_vertex.nodes[i].weight) >= threshold)
+				if (abs(comp_vertex.nodes[i].weight - current_vertex.nodes[i].weight) < threshold);
+				else
 				{
 					skip = true;
 					break;
@@ -1898,9 +1911,12 @@ void section_data::Remove_redundant_vertices(vector<triangle_face>& face_list, v
 			}
 			if (skip)
 				continue;
-			if (abs(comp_vertex.tex_cord.x - current_vertex.tex_cord.x) != 0.0f
-				&& abs(comp_vertex.tex_cord.y - current_vertex.tex_cord.y) != 0.0f)
-				continue;
+			if (abs(comp_vertex.tex_cord.x - current_vertex.tex_cord.x) <threshold)
+			{
+				if (abs(comp_vertex.tex_cord.y - current_vertex.tex_cord.y) < threshold);
+				else continue;
+			}
+			else continue;
 			///found our vertex
 			match_index = new_ver_iter;
 			break;
