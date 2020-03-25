@@ -561,86 +561,63 @@ void mode::Dump_collada_data(string file)
 	test_scene->mRootNode->mName = "root";
 	aiIdentityMatrix4(&test_scene->mRootNode->mTransformation);
 
+	///we will no add a mesh to convert nodes to bone
+	test_scene->mNumMeshes = 1;
+	test_scene->mMeshes = new aiMesh*[1];
+	test_scene->mMeshes[0] = new aiMesh();
+
 	if (nodes_list.size())
-		nodes_data_dump(0, test_scene->mRootNode);
+		nodes_data_dump(0, test_scene->mRootNode, test_scene->mMeshes[0]);
 
 	aiReturn ret = exporter.Export(test_scene, format->id, file, test_scene->mFlags);
+
 }
 //Dumps the render_model node data into the assimp stuff
-void mode::nodes_data_dump(int current_node_index, aiNode* parent_node)
+///recursive implementation
+void mode::nodes_data_dump(int current_node_index, aiNode* parent_node,aiMesh* global_mesh)
 {
-	aiNode** temp = new aiNode*[parent_node->mNumChildren + 1];
-
+	//node adding codes
+	aiNode** t_nodes = new aiNode*[parent_node->mNumChildren + 1];
+	///store all the parent's previous children
 	for (int i = 0; i < parent_node->mNumChildren; i++)
 	{
-		temp[i] = parent_node->mChildren[i];
+		t_nodes[i] = parent_node->mChildren[i];
 	}
 
 	aiNode* t_node= new aiNode();
 	t_node->mName = nodes_list[current_node_index].name;
-	t_node->mParent = parent_node;
-	
-	aiMatrix4x4 inv_trans;
-	inv_trans.a1 = nodes_list[current_node_index].inverseForward.y;
-	inv_trans.a2 = nodes_list[current_node_index].inverseLeft.y;
-	inv_trans.a3 = nodes_list[current_node_index].inverseUp.y;
-	inv_trans.a4 = nodes_list[current_node_index].inversePosition.y * 100;
+	t_node->mParent = parent_node;	
+	nodes t_current_node = nodes_list[current_node_index];
+	aiMatrix4x4 local_node_transform({ 1,1,1 },
+	{ t_current_node.defaultRotation.w,t_current_node.defaultRotation.i,t_current_node.defaultRotation.j,t_current_node.defaultRotation.k },
+	{ t_current_node.defaultTranslation.x,t_current_node.defaultTranslation.y,t_current_node.defaultTranslation.z });
+	t_node->mTransformation = local_node_transform;//actually its the transformation
 
-	inv_trans.b1 = nodes_list[current_node_index].inverseForward.z;
-	inv_trans.b2 = nodes_list[current_node_index].inverseLeft.z;
-	inv_trans.b3 = nodes_list[current_node_index].inverseUp.z;
-	inv_trans.b4 = nodes_list[current_node_index].inversePosition.z * 100;
-
-	inv_trans.c1 = nodes_list[current_node_index].inverseLeft.x;
-	inv_trans.c2 = nodes_list[current_node_index].inverseUp.x;
-	inv_trans.c3 = nodes_list[current_node_index].inversePosition.x;
-	inv_trans.c4 = nodes_list[current_node_index].inverseScale * 100;
-
-	inv_trans.d1 = 0;
-	inv_trans.d2 = 0;
-	inv_trans.d3 = 0;
-	inv_trans.d4 = 1;
-
-	inv_trans.Inverse();
-
-	if (nodes_list[current_node_index].parentNode != -1)
-	{
-		aiMatrix4x4 p_inv_trans;
-
-		p_inv_trans.a1 = nodes_list[nodes_list[current_node_index].parentNode].inverseForward.y;
-		p_inv_trans.a2 = nodes_list[nodes_list[current_node_index].parentNode].inverseLeft.y;
-		p_inv_trans.a3 = nodes_list[nodes_list[current_node_index].parentNode].inverseUp.y;
-		p_inv_trans.a4 = nodes_list[nodes_list[current_node_index].parentNode].inversePosition.y * 100;
-
-		p_inv_trans.b1 = nodes_list[nodes_list[current_node_index].parentNode].inverseForward.z;
-		p_inv_trans.b2 = nodes_list[nodes_list[current_node_index].parentNode].inverseLeft.z;
-		p_inv_trans.b3 = nodes_list[nodes_list[current_node_index].parentNode].inverseUp.z;
-		p_inv_trans.b4 = nodes_list[nodes_list[current_node_index].parentNode].inversePosition.z * 100;
-
-		p_inv_trans.c1 = nodes_list[nodes_list[current_node_index].parentNode].inverseLeft.x;
-		p_inv_trans.c2 = nodes_list[nodes_list[current_node_index].parentNode].inverseUp.x;
-		p_inv_trans.c3 = nodes_list[nodes_list[current_node_index].parentNode].inversePosition.x;
-		p_inv_trans.c4 = nodes_list[nodes_list[current_node_index].parentNode].inverseScale * 100;
-
-		p_inv_trans.d1 = 0;
-		p_inv_trans.d2 = 0;
-		p_inv_trans.d3 = 0;
-		p_inv_trans.d4 = 1;
-
-		aiMultiplyMatrix4(&inv_trans, &p_inv_trans);
-	}
-	t_node->mTransformation = inv_trans;//actually its the transformation
-
-	temp[parent_node->mNumChildren] = t_node;
-
-	delete [] parent_node->mChildren;
-	parent_node->mChildren = temp;	
+	t_nodes[parent_node->mNumChildren] = t_node;
+	delete [] parent_node->mChildren;///delete the older array
+	parent_node->mChildren = t_nodes;	///assign to newer array
 	parent_node->mNumChildren += 1;
+
+	//node to bone conversion codes
+	aiBone** t_bones = new aiBone*[global_mesh->mNumBones + 1];
+	///store all the previous bone declarations
+	for (int i = 0; i < global_mesh->mNumBones; i++)
+	{
+		t_bones[i] = global_mesh->mBones[i];
+	}
+
+	aiBone* t_current_bone = new aiBone();
+	t_current_bone->mName = nodes_list[current_node_index].name;
+
+	t_bones[global_mesh->mNumBones] = t_current_bone;
+	delete[] global_mesh->mBones;
+	global_mesh->mBones = t_bones;
+	global_mesh->mNumBones += 1;
 	
 	if (nodes_list[current_node_index].nextSiblingNode != -1)
-		nodes_data_dump(nodes_list[current_node_index].nextSiblingNode, parent_node);
+		nodes_data_dump(nodes_list[current_node_index].nextSiblingNode, parent_node, global_mesh);
 	if (nodes_list[current_node_index].firstChildNode != -1)
-		nodes_data_dump(nodes_list[current_node_index].firstChildNode, t_node);
+		nodes_data_dump(nodes_list[current_node_index].firstChildNode, t_node, global_mesh);
 		
 }
 //Dumps the loaded model data into a render_model file

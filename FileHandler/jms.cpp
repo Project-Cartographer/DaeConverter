@@ -253,14 +253,31 @@ namespace jms
 				node_weights.push_back(f);
 			}
 			_parse_next(jms_stream, t_count);
-			//i support only one coordinate :P
+			//i support only two UV channels :P
+			if (t_count > 1)
+				has_secondary_coordinates = true;
 			while (t_count--)
 			{   //x,y reading
-				_parse_next(jms_stream, f);
-				tex_cords.x = f;
-				_parse_next(jms_stream, f);
-				tex_cords.y = f;
-				tex_cords.z = 0.0;
+				switch (t_count)
+				{
+				case 0:
+					_parse_next(jms_stream, f);
+					tex_cords.x = f;
+					_parse_next(jms_stream, f);
+					tex_cords.y = f;
+					break;
+				case 1:
+					_parse_next(jms_stream, f);
+					secondary_tex_coords.x = f;
+					_parse_next(jms_stream, f);
+					secondary_tex_coords.y = f;
+					break;
+				default:
+					//just dummy processing
+					_parse_next(jms_stream, f);
+					_parse_next(jms_stream, f);
+					break;
+				}
 			}
 			break;
 		default: std::cout << "\nUnable to read vertex data,Unsupported version : " << version;
@@ -293,8 +310,17 @@ namespace jms
 			*jms_stream << node_indices.size() << '\n';
 			for (int i = 0; i < node_indices.size(); i++)
 				*jms_stream << node_indices[i] << '\t' << node_weights[i] << '\n';
-			*jms_stream << 1 << '\n';
-			*jms_stream << tex_cords.x << '\t' << tex_cords.y << '\n';
+			if (!has_secondary_coordinates)
+			{
+				*jms_stream << 1 << '\n';
+				*jms_stream << tex_cords.x << '\t' << tex_cords.y << '\n';
+			}
+			else
+			{
+				*jms_stream << 2 << '\n';
+				*jms_stream << tex_cords.x << '\t' << tex_cords.y << '\n';
+				*jms_stream << secondary_tex_coords.x << '\t' << secondary_tex_coords.y << '\n';
+			}
 			break;
 		default: std::cout << "\nUnable to write vertex data,Unsupported version : " << version;
 		}

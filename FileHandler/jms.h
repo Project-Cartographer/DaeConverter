@@ -160,9 +160,12 @@ namespace jms
 		 std::vector<int> node_indices;
 		 std::vector<float> node_weights;
 		 vector3D tex_cords;//[u,v,w]=[x,y,z]
+		 bool has_secondary_coordinates;
+		 vector3D secondary_tex_coords;//second channel,usually used of lightmapping purpose
 
 		 vertex() {
-			 position = normal = tex_cords = vector3D();
+			 has_secondary_coordinates = false;
+			 position = normal = tex_cords = secondary_tex_coords = vector3D();
 		 }
 		 //read from ifstream(text interface)
 		 void read(std::ifstream* jms_stream,int version);
