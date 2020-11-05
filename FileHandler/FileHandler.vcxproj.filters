@@ -29,6 +29,9 @@
       <Filter>Mode</Filter>
     </ClCompile>
     <ClCompile Include="Source.cpp" />
+    <ClCompile Include="triangle_strip_optimizer.cpp">
+      <Filter>Mode</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="data_structures.h">
@@ -53,6 +56,9 @@
       <Filter>Mode</Filter>
     </ClInclude>
     <ClInclude Include="JMS_intermediate.h">
+      <Filter>Mode</Filter>
+    </ClInclude>
+    <ClInclude Include="triangle_strip_optimizer.h">
       <Filter>Mode</Filter>
     </ClInclude>
   </ItemGroup>

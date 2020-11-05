@@ -43,3 +43,4 @@
 *.ipdb
 *.iobj
 *.JMS
+/FileHandler/testjms.render_model

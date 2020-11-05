@@ -705,12 +705,14 @@ void mode::Dump_render_model(string file_loc)
 			for (int j = 0; j < region_list[i].perms.size(); j++)
 				fout.write(region_list[i].perms[j].name.c_str(), region_list[i].perms[j].name.length());
 		}
-		//---------------------------------at least there should be one section------------------------
-		//creating the section header
-		_dfbt.block_count = section_data_list.size();
-		_dfbt.block_size = 0x68;
+		if (section_data_list.size())
+		{
+			//creating the section header
+			_dfbt.block_count = section_data_list.size();
+			_dfbt.block_size = 0x68;
 
-		fout.write((char*)&_dfbt, sizeof(dfbt));
+			fout.write((char*)&_dfbt, sizeof(dfbt));
+		}
 
 		//writing the section block
 		for (int i = 0; i < section_data_list.size(); i++)
@@ -736,7 +738,7 @@ void mode::Dump_render_model(string file_loc)
 			*(int*)&section_data[0x24] = section_data_list[i].vertex_list.size();
 
 			//calculating stip indexes length
-			__int16 strip_indexes_length=0;
+			int strip_indexes_length=0;
 			for (int j = 0; j < section_data_list[i].parts_list.size(); j++)
 				strip_indexes_length += section_data_list[i].parts_list[j].face_list.size() * 3;
 
